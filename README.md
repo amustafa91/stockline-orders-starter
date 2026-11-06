@@ -1,4 +1,4 @@
-# Stockline Orders · Lesson 1 starter
+# Stockline Orders · Course starter
 
 Watch Lesson 1 of Clean Architecture in .NET, then use this solution to repeat the refactor. The starting checkout action handles the payment provider directly. During the lesson you will move that dependency behind a payment interface.
 
@@ -6,7 +6,7 @@ Watch Lesson 1 of Clean Architecture in .NET, then use this solution to repeat t
 
 - Skills: basic C#, interfaces, async/await, and HTTP requests and responses.
 - Software: the .NET 10 SDK, a C# editor, and a terminal. The commands below use PowerShell.
-- Check your SDK with `dotnet --version`. Open `Stockline.L01.slnx` in your editor.
+- Check your SDK with `dotnet --version`. Open `Stockline.Orders.slnx` in your editor.
 
 ## Find your way around
 
