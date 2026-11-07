@@ -4,9 +4,21 @@ Build Stockline Orders alongside Practical .NET Architecture. Module 1, Lesson 1
 
 ## Before you start
 
-You need basic C#, interfaces, async/await, and HTTP requests and responses. Install the .NET 10 SDK, VS Code with C# support, and Postman.
+You need basic C#, interfaces, async/await, and HTTP requests and responses. Install the .NET 10 SDK, VS Code with C# support, Postman, and Git. You should know the basics of finding and cloning a repository on GitHub.
 
-Download this branch with Code > Download ZIP, or clone the repository. Open Stockline.Orders.slnx.
+## Clone the starter
+
+Clone the repository and open its folder in VS Code:
+
+~~~text
+git clone https://github.com/amustafa91/stockline-orders-starter.git
+cd stockline-orders-starter
+code .
+~~~
+
+You can also run **Git: Clone** from the VS Code command palette, paste the same repository URL, choose a destination folder, and open the cloned repository. Use the **main** branch to start the lesson. Open Stockline.Orders.slnx when your editor asks which solution to load.
+
+Git must be installed locally. This repository is public, so a GitHub account is not required to clone it. The completed lesson is a separate checkpoint; begin with main to build along.
 
 ## Run the application
 
