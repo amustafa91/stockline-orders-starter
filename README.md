@@ -1,6 +1,6 @@
-# Stockline Orders · Course starter
+# Stockline Orders · Lesson 1 completed checkpoint
 
-Build Stockline Orders alongside Practical .NET Architecture. Module 1, Lesson 1 starts with a checkout controller that knows the payment provider's reply codes.
+This branch contains the completed payment-adapter refactor. The main branch contains the course starter. The steps below describe the changes demonstrated in Lesson 1. SUCCESS is configured here and returns HTTP 201 with Confirmed.
 
 ## Before you start
 
@@ -22,7 +22,7 @@ Import postman/Stockline Orders.postman_collection.json into Postman and open Cr
 curl --request POST 'http://localhost:5375/orders' --header 'Content-Type: application/json' --data '{"quantity":2}'
 ~~~
 
-The first result is HTTP 201 with Confirmed. The synthetic order contains two units priced at USD 12 each, for USD 24 total. Get Last Order reads the order created by your latest request.
+The result is HTTP 201 with Confirmed. The synthetic order contains two units priced at USD 12 each, for USD 24 total. Get Last Order reads the order created by your latest request.
 
 ## What each folder does
 

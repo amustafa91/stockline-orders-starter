@@ -1,5 +1,6 @@
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
+builder.Services.AddScoped<IPaymentGateway, PaymentAdapter>();
 builder.Services.AddSingleton<OrderStore>();
 builder.Services.AddSingleton<SimulatedProvider>();
 builder.Services.AddHttpClient("provider", client => client.BaseAddress = new Uri("http://stockline-simulator.test"))

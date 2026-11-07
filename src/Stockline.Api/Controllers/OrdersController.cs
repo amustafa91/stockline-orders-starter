@@ -1,9 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
-using System.Net.Http.Json;
 
 [ApiController]
 [Route("orders")]
-public sealed class OrdersController(OrderStore store, IHttpClientFactory clients)
+public sealed class OrdersController(OrderStore store, IPaymentGateway payments)
     : ControllerBase
 {
     [HttpPost]
@@ -12,25 +11,8 @@ public sealed class OrdersController(OrderStore store, IHttpClientFactory client
     {
         if (!request.IsValid) return BadRequest();
         var order = store.Start(request.Quantity);
-        using var client = clients.CreateClient("provider");
-        PaymentDecision decision;
-        try
-        {
-            using var response = await client.PostAsJsonAsync("authorize",
-                new ProviderRequest(order.OperationKey, order.Total), cancellationToken);
-            response.EnsureSuccessStatusCode();
-            var reply = await response.Content.ReadFromJsonAsync<ProviderReply>(cancellationToken);
-            decision = reply?.Code switch
-            {
-                "APPROVED" => PaymentDecision.Approved,
-                "DECLINED" => PaymentDecision.Declined,
-                _ => PaymentDecision.Unknown
-            };
-        }
-        catch (HttpRequestException)
-        {
-            decision = PaymentDecision.Unknown;
-        }
+        var decision = await payments.AuthorizeAsync(
+            order.OperationKey, order.Total, cancellationToken);
         return CheckoutHttp.ToResult(store.Complete(order, decision));
     }
 
