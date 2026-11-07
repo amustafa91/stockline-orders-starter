@@ -8,9 +8,10 @@ public sealed record ProviderReply(string Code);
 public enum ProviderScenario { Approve, Decline, AuthorizeThenDisconnect }
 public sealed record ProviderEvent(string Key, string Action, decimal Amount);
 
-public sealed class SimulatedProvider : HttpMessageHandler
+public sealed class SimulatedProvider(IConfiguration configuration) : HttpMessageHandler
 {
-    public ProviderScenario Scenario { get; set; } = ProviderScenario.AuthorizeThenDisconnect;
+    public ProviderScenario Scenario { get; set; } =
+        Enum.Parse<ProviderScenario>(configuration["PaymentProvider:Scenario"] ?? "Approve");
     public ConcurrentQueue<ProviderEvent> Events { get; } = new();
 
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,
@@ -33,7 +34,7 @@ public sealed class SimulatedProvider : HttpMessageHandler
             throw new HttpRequestException("Simulated disconnect after authorization.");
         }
 
-        return Reply("APPROVED");
+        return Reply(configuration["PaymentProvider:ApprovedReply"] ?? "APPROVED");
     }
 
     private static HttpResponseMessage Reply(string code) => new(HttpStatusCode.OK)

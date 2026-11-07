@@ -1,43 +1,61 @@
 # Stockline Orders · Course starter
 
-Watch Lesson 1 of Clean Architecture in .NET, then use this solution to repeat the refactor. The starting checkout action handles the payment provider directly. During the lesson you will move that dependency behind a payment interface.
+Build Stockline Orders alongside Practical .NET Architecture. Module 1, Lesson 1 starts with a checkout controller that knows the payment provider's reply codes.
 
-## Prerequisites
+## Before you start
 
-- Skills: basic C#, interfaces, async/await, and HTTP requests and responses.
-- Software: the .NET 10 SDK, a C# editor, and a terminal. The commands below use PowerShell.
-- Check your SDK with `dotnet --version`. Open `Stockline.Orders.slnx` in your editor.
+You need basic C#, interfaces, async/await, and HTTP requests and responses. Install the .NET 10 SDK, VS Code with C# support, and Postman.
 
-## Find your way around
+Download this branch with Code > Download ZIP, or clone the repository. Open Stockline.Orders.slnx.
 
-| Location | What you will find |
+## Run the application
+
+Run this command from the folder containing the solution.
+
+~~~powershell
+dotnet run --project ./src/Stockline.Api/Stockline.csproj -- --urls http://localhost:5375
+~~~
+
+Import postman/Stockline Orders.postman_collection.json into Postman and open Create Order. In Postman's lightweight client, paste this request into its URL field.
+
+~~~text
+curl --request POST 'http://localhost:5375/orders' --header 'Content-Type: application/json' --data '{"quantity":2}'
+~~~
+
+The first result is HTTP 201 with Confirmed. The synthetic order contains two units priced at USD 12 each, for USD 24 total. Get Last Order reads the order created by your latest request.
+
+## What each folder does
+
+| Location | Purpose |
 | --- | --- |
-| `src/Stockline.Api/Program.cs` | Service registrations and controller routing |
-| `src/Stockline.Api/Controllers/` | Checkout action, request validation, and HTTP response mapping |
-| `src/Stockline.Api/Orders/` | Order model, payment decision, and in-memory store |
-| `src/Stockline.Api/Payments/` | Local simulated payment provider |
+| src/Stockline.Api/Controllers | Receives requests, validates input, and returns HTTP responses |
+| src/Stockline.Api/Orders | Order data, payment decisions, and the in-memory order store |
+| src/Stockline.Api/Payments | Local simulated payment provider |
+| src/Stockline.Api/appsettings.json | Provider reply and scenario used in the lesson |
+| src/Stockline.Api/Program.cs | Registers services and maps controllers |
+| postman | Requests used in the course |
 
-## Run the starter
+## Lesson 1 · One provider changes its wording
 
-From the folder containing the solution:
+1. Send Create Order with ApprovedReply set to APPROVED.
+2. Change ApprovedReply to SUCCESS in src/Stockline.Api/appsettings.json.
+3. Stop and restart the API, then send the same request. The unchanged controller returns HTTP 202 and PendingReconciliation, even though the simulated provider approved payment.
+4. Add Orders/IPaymentGateway.cs. Its AuthorizeAsync method accepts an operation key, amount, and cancellation token, and returns a PaymentDecision.
+5. Add Payments/PaymentAdapter.cs. Move the provider HTTP call, reply mapping, and transport-error handling from the controller into this adapter. Translate both APPROVED and SUCCESS to PaymentDecision.Approved.
+6. Inject IPaymentGateway into OrdersController. Register IPaymentGateway with PaymentAdapter in Program.cs.
+7. Build, restart, and repeat Create Order. The result is HTTP 201 and Confirmed.
 
-```powershell
-dotnet run --project ./src/Stockline.Api/Stockline.csproj -- --urls http://127.0.0.1:5359
-```
+The completed checkpoint is on the lesson-01-complete branch of this repository.
 
-In a second terminal:
+## Try the other outcomes
 
-```powershell
-$r = Invoke-WebRequest -Method Post -Uri 'http://127.0.0.1:5359/orders' -ContentType 'application/json' -Body '{"quantity":2}'
-$r.StatusCode
-$r.Headers.Location
-$r.Content
-```
+Set PaymentProvider:Scenario in appsettings.json and restart.
 
-The simulator approves the payment and loses the reply. Expect HTTP 202 with `PendingReconciliation`. Restart the API and reuse the same request after each checkpoint. The simulator and order store run in memory.
+| Scenario | ApprovedReply | Expected result |
+| --- | --- | --- |
+| Approve | APPROVED | HTTP 201, Confirmed |
+| Approve | SUCCESS | Starter HTTP 202, completed checkpoint HTTP 201 |
+| Decline | Either value | HTTP 409, Declined |
+| AuthorizeThenDisconnect | Either value | HTTP 202, PendingReconciliation |
 
-## Follow the refactor
-
-1. Add `IPaymentGateway.cs` in `Orders/`.
-2. Add `ProviderAdapter.cs` in `Payments/`, register it in `Program.cs`, and inject the interface into `OrdersController`.
-3. Add `PlaceOrder.cs` in `Orders/`. Register it in `Program.cs` and call it from the controller's POST action.
+A transport failure leaves the provider outcome unknown. Durable reconciliation and safe replay are covered later. This fixture uses simulated payments and in-memory orders. Restarting clears the orders, and repeated POST requests create new demo orders.
