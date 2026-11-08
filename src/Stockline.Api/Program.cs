@@ -3,6 +3,7 @@ builder.Services.AddControllers();
 builder.Services.AddScoped<IPaymentGateway, PaymentAdapter>();
 builder.Services.AddSingleton<OrderStore>();
 builder.Services.AddSingleton<ProductCatalog>();
+builder.Services.AddSingleton<OrderPricing>();
 builder.Services.AddSingleton<SimulatedProvider>();
 // This handler simulates a provider locally; the .test address never reaches a payment service.
 builder.Services.AddHttpClient("provider", client => client.BaseAddress = new Uri("http://stockline-simulator.test"))

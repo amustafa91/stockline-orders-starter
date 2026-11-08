@@ -6,12 +6,12 @@ public sealed class OrderStore
     private int _sequence = 1047;
     private readonly ConcurrentDictionary<string, Order> _orders = new();
 
-    public Order Start(Product product, int quantity)
+    public Order Start(Product product, int quantity, decimal total)
     {
         var id = $"ORD-{Interlocked.Increment(ref _sequence)}";
         // Capture the agreed values; later catalog changes must not rewrite this order.
         var order = new Order(id, $"authorize:{id}", product.Sku, quantity,
-            product.UnitPrice * quantity, product.Currency, "Pending");
+            total, product.Currency, "Pending");
         _orders[id] = order;
         return order;
     }

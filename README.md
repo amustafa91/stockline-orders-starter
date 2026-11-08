@@ -1,25 +1,21 @@
-# Stockline Orders — completed Lesson 2
+# Stockline Orders — Lesson 3 completed checkpoint
 
-This checkpoint continues from lesson-01-complete and adds product choice. It uses controllers in one project. Prices belong to the server; the request supplies SKU and quantity (1–100).
+Module 1: Clean Code Foundations. Add wholesale pricing without changing storage.
 
-| SKU | Unit price |
-|---|---:|
-| BRG-204 | USD 12.00 |
-| CAB-105 | USD 7.50 |
+Start from your completed Lesson 2 solution. Use .NET 10 SDK, Git, VS Code with C# support and Postman. This is one controller-based project; there is no database or minimal API.
 
-From the repository root run:
 ```powershell
 dotnet run --project src/Stockline.Api
+dotnet run --project tests/Stockline.Lesson03.Checks
 ```
-Use http://localhost:7375. Import postman/Stockline Orders.postman_collection.json, then use Module 01 / Lesson 02. The required SKU intentionally evolves the request contract; earlier examples in this collection include BRG-204. Extra JSON price/total properties are ignored and cannot set the authoritative price. Missing/unknown SKU or quantity outside 1–100 is rejected before order/payment side effects.
 
-Run the focused checks:
-```powershell
-dotnet run --project tests/Stockline.Lesson02.Checks
-```
-Orders are in memory and disappear on restart. Payment is a local simulation. Captured order totals are historical values, not recalculated from later catalog data. There is no bulk discount yet: that is Lesson 3.
+API: http://localhost:7375. Import the single Postman collection and open Module 01 / Lesson 03. BRG-204 costs USD 12 per unit; CAB-105 costs USD 7.50. Quantities 10–100 receive 10% off the entire subtotal. Round the final total once to two decimals using AwayFromZero. Nine and ten BRG units both cost USD 108: this follows the chosen rule, not a coding bug. Orders snapshot the computed amount and payment uses that amount.
 
-Exercise: add one product, verify the receipt and authorized amount, and show an unknown SKU never reaches payment.
+OrderPricing is a concrete pure calculator. OrderStore receives the computed total and stores it. The controller coordinates these calls for now. No pricing policy interface is needed for one rule.
+
+Orders remain in memory and disappear on restart. Payment is simulated. Cancellation reaches payment, but this does not make the workflow atomic: an interrupted payment can leave a Pending order. Existing decline/unknown outcomes remain meaningful; reconciliation comes later.
+
+Exercise: Explain and test quantities 9, 10 and 11 plus a rounding midpoint. Change a pricing fixture and verify historical receipts remain unchanged.
 
 
 ## Course checkpoints
@@ -40,10 +36,10 @@ Work through the videos in order. Keep your own implementation before switching 
 ```powershell
 git clone https://github.com/amustafa91/stockline-orders-starter.git
 cd stockline-orders-starter
-git switch lesson-01-complete
+git switch lesson-02-complete
 code .
 ```
 
-Implement Lesson 2 in your own branch. To inspect this completed checkpoint, save your work and switch to `lesson-02-complete`.
+Implement Lesson 3 in your own branch. To inspect this completed checkpoint, save your work and switch to `lesson-03-complete`.
 
-Import the collection from the currently checked-out branch: **Stockline Orders → Module 01 - Clean Code Foundations → Lesson 02**. Run only that lesson folder against this checkpoint; different folders represent different code versions. Reimport the same collection ID when updating it, rather than keeping duplicate collections. Send a successful POST before Get Last Order after every API restart.
+Import the collection from the currently checked-out branch: **Stockline Orders → Module 01 - Clean Code Foundations → Lesson 03**. Run only that lesson folder against this checkpoint; different folders represent different code versions. Reimport the same collection ID when updating it, rather than keeping duplicate collections. Send a successful POST before Get Last Order after every API restart.

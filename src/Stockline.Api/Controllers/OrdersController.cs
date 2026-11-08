@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 
 [ApiController]
 [Route("orders")]
-public sealed class OrdersController(OrderStore store, IPaymentGateway payments, ProductCatalog catalog)
+public sealed class OrdersController(OrderStore store, IPaymentGateway payments, ProductCatalog catalog, OrderPricing pricing)
     : ControllerBase
 {
     [HttpPost]
@@ -15,7 +15,8 @@ public sealed class OrdersController(OrderStore store, IPaymentGateway payments,
         var product = catalog.Find(request.Sku!);
         if (product is null)
             return BadRequest(new { error = "Unknown product SKU." });
-        var order = store.Start(product, request.Quantity);
+        var total = pricing.Calculate(product.UnitPrice, request.Quantity);
+        var order = store.Start(product, request.Quantity, total);
         var decision = await payments.AuthorizeAsync(
             order.OperationKey, order.Total, cancellationToken);
         return CheckoutHttp.ToResult(store.Complete(order, decision));
