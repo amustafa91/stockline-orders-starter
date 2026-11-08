@@ -24,45 +24,21 @@ Git must be installed locally. This repository is public, so a GitHub account is
 
 Run this command from the folder containing the solution.
 
-First, trust the local ASP.NET Core HTTPS development certificate (once per computer):
-
-~~~text
-dotnet dev-certs https --trust
-~~~
-
-Accept the operating system's certificate prompt yourself if one appears, then start the app:
-
 ~~~powershell
 dotnet run --project ./src/Stockline.Api/Stockline.csproj
 ~~~
 
-The local **Stockline** launch profile in `src/Stockline.Api/Properties/launchSettings.json` binds the API to **https://localhost:7375**, matching the collection's `baseUrl` variable. No extra URL argument or Postman environment is needed. You can select the profile explicitly with `--launch-profile Stockline`. Keep Postman's SSL certificate verification enabled. If it reports a certificate error, confirm the development certificate is trusted and use `localhost`, matching the certificate name.
+The local **Stockline** launch profile in `src/Stockline.Api/Properties/launchSettings.json` binds the API to **http://localhost:7375**, matching the collection's `baseUrl` variable. No certificate setup, extra URL argument, or Postman environment is needed. You can select the profile explicitly with `--launch-profile Stockline`. This HTTP address is for the local course exercise.
 
 Import postman/Stockline Orders.postman_collection.json into Postman and open Create Order. In Postman's lightweight client, paste this request into its URL field.
 
 ~~~text
-curl --request POST 'https://localhost:7375/orders' --header 'Content-Type: application/json' --data '{"quantity":2}'
+curl --request POST 'http://localhost:7375/orders' --header 'Content-Type: application/json' --data '{"quantity":2}'
 ~~~
 
 The first result is HTTP 201 with Confirmed. The synthetic order contains two units priced at USD 12 each, for USD 24 total. Get Last Order reads the order created by your latest request.
 
-Opening `/` in a browser returns 404: this API has no homepage. Use **POST /orders** with the JSON body shown above. If port 7375 is occupied, stop your other Stockline instance; or choose another HTTPS port with `-- --urls https://localhost:7376` and change the collection's `baseUrl` to match. The launch profile is for local development and is not deployed. The already-published Lesson 1 uses HTTP; this setup update changes only the local address, not its exercise or expected results.
-
-### If Postman rejects the HTTPS certificate
-
-Trusting the development certificate in Windows does not establish that every API client will accept it. If Postman reports `Unable to verify the first certificate` or a self-signed certificate error after the Windows trust step, keep SSL certificate verification enabled and add the public development certificate to Postman's CA certificates.
-
-From PowerShell, export the public certificate to your temporary folder:
-
-~~~powershell
-dotnet dev-certs https --export-path "$env:TEMP/stockline-localhost-public.pem" --format PEM
-~~~
-
-This command exports the public certificate only. In Postman, open **Settings → Certificates**, enable **CA Certificates**, and select `%TEMP%\stockline-localhost-public.pem` using the file picker. Use the **CA Certificates** section; this application does not require a client certificate or a private key. Repeat Create Order at `https://localhost:7375/orders` and confirm that the SSL error is gone.
-
-Do this on each development computer if its Postman client needs it. Export that computer's own development certificate; do not download someone else's certificate or commit certificate files to this repository.
-
-References: [Microsoft's certificate export options](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-dev-certs) and [Postman's CA certificate instructions](https://learning.postman.com/docs/use/send-requests/authorization/certificates/).
+Opening `/` in a browser returns 404: this API has no homepage. Use **POST /orders** with the JSON body shown above. If port 7375 is occupied, stop your other Stockline instance; or choose another HTTP port with `-- --urls http://localhost:7376` and change the collection's `baseUrl` to match. The launch profile is for local development and is not deployed. The setup and Postman collection use the same local address; the exercise and expected results are unchanged.
 
 ## What each folder does
 
