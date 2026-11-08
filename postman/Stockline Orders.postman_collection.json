@@ -55,7 +55,7 @@
                     }
                   },
                   "mode": "raw",
-                  "raw": "{\"quantity\":2}"
+                  "raw": "{\n  \"quantity\": 2,\n  \"sku\": \"BRG-204\"\n}"
                 },
                 "header": [
                   {
@@ -79,12 +79,165 @@
           ]
         },
         {
-          "id": "7f4a062e-ab1b-5532-81ea-bf86867b8e68",
-          "name": "Lesson 02 - Names That Reveal Intent",
-          "description": "Continue from lesson-01-complete and implement Lesson 2; compare with lesson-02-complete. The completed fixture is 199 cents per item. Tests deliberately fail on the incorrect first attempt. Send a Create Order request before Get Last Order. Run this folder for Lesson 2, not the entire course collection.",
+          "name": "Lesson 02 - Who Owns the Price",
           "item": [
             {
-              "name": "Create Order - two units",
+              "name": "BRG - two units - expect 24",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"sku\": \"BRG-204\",\n  \"quantity\": 2\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/orders",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "orders"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "CAB - two units - expect 15",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"sku\": \"CAB-105\",\n  \"quantity\": 2\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/orders",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "orders"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Unknown SKU - expect 400",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"sku\": \"UNKNOWN\",\n  \"quantity\": 2\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/orders",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "orders"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Submitted price ignored - expect 15",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"sku\": \"CAB-105\",\n  \"quantity\": 2,\n  \"unitPrice\": 0.01,\n  \"total\": 0.02\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/orders",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "orders"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Zero quantity - expect 400",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"sku\": \"CAB-105\",\n  \"quantity\": 0\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/orders",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "orders"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Lesson 03 - Wholesale Pricing",
+          "item": [
+            {
+              "name": "BRG - nine units - 108",
               "request": {
                 "method": "POST",
                 "header": [
@@ -96,7 +249,7 @@
                 "url": "{{baseUrl}}/orders",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\"quantity\": 2}",
+                  "raw": "{\n  \"sku\": \"BRG-204\",\n  \"quantity\": 9\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -110,22 +263,16 @@
                   "script": {
                     "type": "text/javascript",
                     "exec": [
-                      "const order = pm.response.json();",
-                      "pm.collectionVariables.set(\"lesson02OrderId\", order.id);",
-                      "pm.test(\"2 unit(s): expected USD 3.98\", () => {",
-                      "  pm.response.to.have.status(201);",
-                      "  pm.expect(order.total).to.eql(3.98);",
-                      "  pm.expect(order.currency).to.eql(\"USD\");",
-                      "  pm.expect(order.status).to.eql(\"Confirmed\");",
-                      "});"
+                      "pm.test(\"Expected HTTP 201\", () => pm.response.to.have.status(201));",
+                      "pm.test(\"Expected total 108\", () => pm.expect(pm.response.json().total).to.eql(108));",
+                      "pm.collectionVariables.set(\"orderId\", pm.response.json().id);"
                     ]
                   }
                 }
-              ],
-              "id": "c85a8e23-025a-581d-a51d-585b40401a2d"
+              ]
             },
             {
-              "name": "Create Order - one unit",
+              "name": "BRG - ten units - 108",
               "request": {
                 "method": "POST",
                 "header": [
@@ -137,7 +284,7 @@
                 "url": "{{baseUrl}}/orders",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\"quantity\": 1}",
+                  "raw": "{\n  \"sku\": \"BRG-204\",\n  \"quantity\": 10\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -151,22 +298,16 @@
                   "script": {
                     "type": "text/javascript",
                     "exec": [
-                      "const order = pm.response.json();",
-                      "pm.collectionVariables.set(\"lesson02OrderId\", order.id);",
-                      "pm.test(\"1 unit(s): expected USD 1.99\", () => {",
-                      "  pm.response.to.have.status(201);",
-                      "  pm.expect(order.total).to.eql(1.99);",
-                      "  pm.expect(order.currency).to.eql(\"USD\");",
-                      "  pm.expect(order.status).to.eql(\"Confirmed\");",
-                      "});"
+                      "pm.test(\"Expected HTTP 201\", () => pm.response.to.have.status(201));",
+                      "pm.test(\"Expected total 108\", () => pm.expect(pm.response.json().total).to.eql(108));",
+                      "pm.collectionVariables.set(\"orderId\", pm.response.json().id);"
                     ]
                   }
                 }
-              ],
-              "id": "a0ee4607-c022-5758-b249-c74ac0d8c0eb"
+              ]
             },
             {
-              "name": "Create Order - three units",
+              "name": "BRG - eleven units - 118.80",
               "request": {
                 "method": "POST",
                 "header": [
@@ -178,7 +319,7 @@
                 "url": "{{baseUrl}}/orders",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\"quantity\": 3}",
+                  "raw": "{\n  \"sku\": \"BRG-204\",\n  \"quantity\": 11\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -192,30 +333,96 @@
                   "script": {
                     "type": "text/javascript",
                     "exec": [
-                      "const order = pm.response.json();",
-                      "pm.collectionVariables.set(\"lesson02OrderId\", order.id);",
-                      "pm.test(\"3 unit(s): expected USD 5.97\", () => {",
-                      "  pm.response.to.have.status(201);",
-                      "  pm.expect(order.total).to.eql(5.97);",
-                      "  pm.expect(order.currency).to.eql(\"USD\");",
-                      "  pm.expect(order.status).to.eql(\"Confirmed\");",
-                      "});"
+                      "pm.test(\"Expected HTTP 201\", () => pm.response.to.have.status(201));",
+                      "pm.test(\"Expected total 118.8\", () => pm.expect(pm.response.json().total).to.eql(118.8));",
+                      "pm.collectionVariables.set(\"orderId\", pm.response.json().id);"
                     ]
                   }
                 }
-              ],
-              "id": "ef258b82-be0e-5460-836c-f18efff79da8"
+              ]
             },
             {
-              "name": "Get Last Order",
+              "name": "CAB - ten units - 67.50",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/orders",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"sku\": \"CAB-105\",\n  \"quantity\": 10\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Expected HTTP 201\", () => pm.response.to.have.status(201));",
+                      "pm.test(\"Expected total 67.5\", () => pm.expect(pm.response.json().total).to.eql(67.5));",
+                      "pm.collectionVariables.set(\"orderId\", pm.response.json().id);"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Unknown SKU - 400",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/orders",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"sku\": \"UNKNOWN\",\n  \"quantity\": 10\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Expected HTTP 400\", () => pm.response.to.have.status(400));"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Get last order",
               "request": {
                 "method": "GET",
-                "url": "{{baseUrl}}/orders/{{lesson02OrderId}}"
-              },
-              "id": "02de27ef-b11e-5022-9281-f886501e41c8"
-            },
+                "url": "{{baseUrl}}/orders/{{orderId}}"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Lesson 04 - Checkout Workflow",
+          "item": [
             {
-              "name": "Reject zero quantity",
+              "name": "BRG - nine units - 108",
               "request": {
                 "method": "POST",
                 "header": [
@@ -227,7 +434,7 @@
                 "url": "{{baseUrl}}/orders",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\"quantity\":0}",
+                  "raw": "{\n  \"sku\": \"BRG-204\",\n  \"quantity\": 9\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -241,12 +448,158 @@
                   "script": {
                     "type": "text/javascript",
                     "exec": [
-                      "pm.test(\"Zero quantity is rejected\", () => pm.response.to.have.status(400));"
+                      "pm.test(\"Expected HTTP 201\", () => pm.response.to.have.status(201));",
+                      "pm.test(\"Expected total 108\", () => pm.expect(pm.response.json().total).to.eql(108));",
+                      "pm.collectionVariables.set(\"orderId\", pm.response.json().id);"
                     ]
                   }
                 }
-              ],
-              "id": "ca99a56d-c1a5-5e36-bb58-c26d02735f7a"
+              ]
+            },
+            {
+              "name": "BRG - ten units - 108",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/orders",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"sku\": \"BRG-204\",\n  \"quantity\": 10\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Expected HTTP 201\", () => pm.response.to.have.status(201));",
+                      "pm.test(\"Expected total 108\", () => pm.expect(pm.response.json().total).to.eql(108));",
+                      "pm.collectionVariables.set(\"orderId\", pm.response.json().id);"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "BRG - eleven units - 118.80",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/orders",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"sku\": \"BRG-204\",\n  \"quantity\": 11\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Expected HTTP 201\", () => pm.response.to.have.status(201));",
+                      "pm.test(\"Expected total 118.8\", () => pm.expect(pm.response.json().total).to.eql(118.8));",
+                      "pm.collectionVariables.set(\"orderId\", pm.response.json().id);"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "CAB - ten units - 67.50",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/orders",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"sku\": \"CAB-105\",\n  \"quantity\": 10\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Expected HTTP 201\", () => pm.response.to.have.status(201));",
+                      "pm.test(\"Expected total 67.5\", () => pm.expect(pm.response.json().total).to.eql(67.5));",
+                      "pm.collectionVariables.set(\"orderId\", pm.response.json().id);"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Unknown SKU - 400",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/orders",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"sku\": \"UNKNOWN\",\n  \"quantity\": 10\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Expected HTTP 400\", () => pm.response.to.have.status(400));"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Get last order",
+              "request": {
+                "method": "GET",
+                "url": "{{baseUrl}}/orders/{{orderId}}"
+              }
             }
           ]
         }

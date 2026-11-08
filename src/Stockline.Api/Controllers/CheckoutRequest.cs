@@ -1,4 +1,5 @@
-public sealed record CheckoutRequest(int Quantity)
+public sealed record CheckoutRequest(string? Sku, int Quantity)
 {
-    public bool IsValid => Quantity is >= 1 and <= 100;
+    public bool IsValid => !string.IsNullOrWhiteSpace(Sku)
+        && Quantity is >= 1 and <= 100;
 }

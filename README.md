@@ -1,82 +1,49 @@
-# Stockline Orders · Lesson 2 completed checkpoint
+# Stockline Orders — completed Lesson 2
 
-Module 1: Clean Code Foundations. Lesson 2: Names that reveal business intent.
+This checkpoint continues from lesson-01-complete and adds product choice. It uses controllers in one project. Prices belong to the server; the request supplies SKU and quantity (1–100).
 
-This branch follows `lesson-01-complete`. It keeps the payment adapter and changes a fixed catalog fixture from USD 12 per unit to **199 cents per unit**. It demonstrates explicit units, one cents-to-dollars conversion, and decimal arithmetic. It does not add live catalog integration or currency conversion.
+| SKU | Unit price |
+|---|---:|
+| BRG-204 | USD 12.00 |
+| CAB-105 | USD 7.50 |
 
-## Build along
+From the repository root run:
+```powershell
+dotnet run --project src/Stockline.Api
+```
+Use http://localhost:7375. Import postman/Stockline Orders.postman_collection.json, then use Module 01 / Lesson 02. The required SKU intentionally evolves the request contract; earlier examples in this collection include BRG-204. Extra JSON price/total properties are ignored and cannot set the authoritative price. Missing/unknown SKU or quantity outside 1–100 is rejected before order/payment side effects.
 
-```text
+Run the focused checks:
+```powershell
+dotnet run --project tests/Stockline.Lesson02.Checks
+```
+Orders are in memory and disappear on restart. Payment is a local simulation. Captured order totals are historical values, not recalculated from later catalog data. There is no bulk discount yet: that is Lesson 3.
+
+Exercise: add one product, verify the receipt and authorized amount, and show an unknown SKU never reaches payment.
+
+
+## Course checkpoints
+
+Work through the videos in order. Keep your own implementation before switching to comparison code.
+
+| Video | Start from | Completed checkpoint |
+|---|---|---|
+| Lesson 1 — Isolate the Payment Provider | `main` | [`lesson-01-complete`](https://github.com/amustafa91/stockline-orders-starter/tree/lesson-01-complete) |
+| Lesson 2 — Who Owns the Price? | `lesson-01-complete` | [`lesson-02-complete`](https://github.com/amustafa91/stockline-orders-starter/tree/lesson-02-complete) |
+| Lesson 3 — Wholesale Pricing | `lesson-02-complete` | [`lesson-03-complete`](https://github.com/amustafa91/stockline-orders-starter/tree/lesson-03-complete) |
+| Lesson 4 — Give Checkout a Home | `lesson-03-complete` | [`lesson-04-complete`](https://github.com/amustafa91/stockline-orders-starter/tree/lesson-04-complete) |
+
+`main` remains the original Lesson 1 starter. The completed Lesson 2 now matches **Who Owns the Price?**, replacing the retired 199-cent naming exercise. No generated video, voice recording, production tool or personal file is included in these checkpoints.
+
+## Clone and choose the checkpoint
+
+```powershell
 git clone https://github.com/amustafa91/stockline-orders-starter.git
 cd stockline-orders-starter
 git switch lesson-01-complete
 code .
 ```
 
-Use your own completed Lesson 1 solution instead if you prefer. Implement the lesson before comparing with `lesson-02-complete`. The `main` branch remains the original Lesson 1 starter.
+Implement Lesson 2 in your own branch. To inspect this completed checkpoint, save your work and switch to `lesson-02-complete`.
 
-## Run with HTTP
-
-Install .NET 10 SDK, Git, VS Code with C# support, and Postman. From the solution folder, run:
-
-```text
-dotnet run --project ./src/Stockline.Api/Stockline.csproj
-```
-
-The Stockline launch profile binds to **http://localhost:7375**. Import `postman/Stockline Orders.postman_collection.json`; the single course collection is named **Stockline Orders**, and its `baseUrl` is the same **http://localhost:7375**. No certificate setup or Postman environment is needed. This HTTP address is for the local course exercise.
-
-## Postman course folders
-
-Import the single `postman/Stockline Orders.postman_collection.json` file. All code checkpoints use the same collection and folder structure:
-
-```text
-Stockline Orders
-└── Module 01 - Clean Code Foundations
-    ├── Lesson 01 - Isolate the Payment Provider
-    │   ├── Create Order
-    │   └── Get Last Order
-    └── Lesson 02 - Names That Reveal Intent
-        ├── Create Order - two units
-        ├── Create Order - one unit
-        ├── Create Order - three units
-        ├── Get Last Order
-        └── Reject zero quantity
-```
-
-Open or run only the current lesson folder against its matching code. Lesson 1 uses USD 12 per item; the completed Lesson 2 fixture uses 199 cents per item. A separate saved order identifier for each lesson prevents one lesson's request from replacing the other's value. Send a Create Order request before Get Last Order; restarting the API clears stored orders. The collection-level `baseUrl` is **http://localhost:7375** for every lesson. Future lessons belong under this collection, rather than separate collections.
-
-## Follow the change in OrderStore.cs
-
-1. Confirm Lesson 1 still returns HTTP 201, Confirmed, total 24 for two units.
-2. New requirement: the exercise's catalog fixture gives the integer 199, in cents.
-3. The deliberately wrong first attempt uses `var price = 199` and `price * quantity`. Two units incorrectly produce 398 dollars.
-4. Use Rename Symbol to change `price` to `unitPriceCents`. Renaming exposes the missing conversion but leaves behavior unchanged.
-5. Derive `unitPriceUsd = unitPriceCents / 100m`. The decimal literal avoids integer division.
-6. Calculate `totalUsd = unitPriceUsd * quantity` and pass it into the order constructor.
-7. Keep the public JSON fields `total` and `currency` unchanged. The contract still returns a USD total.
-
-| Check | Expected outcome |
-| --- | --- |
-| One unit at 199 cents | HTTP 201, Confirmed, USD 1.99 |
-| Two units at 199 cents | HTTP 201, Confirmed, USD 3.98 |
-| Three units at 199 cents | HTTP 201, Confirmed, USD 5.97 |
-| GET the returned order ID | Same stored total and quantity |
-| Quantity zero | HTTP 400 |
-| Temporarily use 1200 cents, two units | USD 24.00; restore 199 afterward |
-
-The Postman tests target the completed 199-cent fixture with the Approve scenario. They intentionally fail on the incorrect attempt. Use the folder for the active lesson: Lesson 1 expects USD 24 for two units; completed Lesson 2 expects USD 3.98. Do not run all lesson folders against a single checkpoint. The provider outcome exercises from Lesson 1 still apply, but their totals now use this lesson's price.
-
-## Exercise
-
-Change the fixture to 249 cents. Predict the total for three units, send the request, and explain why renaming `price` alone would not repair the bug. Adjust the expected assertion when deliberately changing the fixture. Restore 199 cents before continuing to the next lesson.
-
-## Folders and teaching shortcuts
-
-- `Controllers`: HTTP input and response handling.
-- `Orders`: order data, payment contract, and in-memory storage/pricing fixture.
-- `Payments`: simulated provider and its adapter; no real payment is sent.
-- `Properties/launchSettings.json`: local HTTPS address.
-- `Program.cs`: service registrations and controller mapping.
-- `postman`: executable request scenarios.
-
-Comments explain intentional shortcuts. Restarting clears orders. The fixed catalog value keeps this lesson focused; catalog I/O, money types, persistence, and larger architectural boundaries come when later requirements justify them.
+Import the collection from the currently checked-out branch: **Stockline Orders → Module 01 - Clean Code Foundations → Lesson 02**. Run only that lesson folder against this checkpoint; different folders represent different code versions. Reimport the same collection ID when updating it, rather than keeping duplicate collections. Send a successful POST before Get Last Order after every API restart.
