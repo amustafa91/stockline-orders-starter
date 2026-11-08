@@ -1,63 +1,256 @@
 {
+  "info": {
+    "_postman_id": "6451efc4-bdca-4578-a005-994fd961faaf",
+    "name": "Stockline Orders",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "One collection for the Stockline Orders course. Open the module, then the current lesson folder. Run only that lesson folder against its matching code checkpoint; lesson expectations differ."
+  },
   "variable": [
     {
       "key": "baseUrl",
       "value": "http://localhost:7375"
     },
     {
-      "key": "orderId",
-      "value": "ORD-1048"
-    }
-  ],
-  "info": {
-    "name": "Stockline Orders - Course",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
-  },
-  "item": [
-    {
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "const order = pm.response.json();",
-              "pm.collectionVariables.set(\"orderId\", order.id);",
-              "pm.test(\"Known checkout response\", () => {",
-              "  pm.expect(pm.response.code).to.be.oneOf([201, 202, 409]);",
-              "  pm.expect(order.total).to.eql(24);",
-              "});"
-            ],
-            "type": "text/javascript"
-          }
-        }
-      ],
-      "request": {
-        "url": "{{baseUrl}}/orders",
-        "body": {
-          "options": {
-            "raw": {
-              "language": "json"
-            }
-          },
-          "mode": "raw",
-          "raw": "{\"quantity\":2}"
-        },
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "method": "POST"
-      },
-      "name": "Create Order"
+      "key": "lesson01OrderId",
+      "value": ""
     },
     {
-      "name": "Get Last Order",
-      "request": {
-        "method": "GET",
-        "url": "{{baseUrl}}/orders/{{orderId}}"
-      }
+      "key": "lesson02OrderId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "id": "4b8cf1cc-0a76-5a15-829b-a8930245b113",
+      "name": "Module 01 - Clean Code Foundations",
+      "item": [
+        {
+          "id": "810930aa-926e-5d76-8300-c5e1ddf3dd72",
+          "name": "Lesson 01 - Isolate the Payment Provider",
+          "description": "Start on main and implement Lesson 1; compare with lesson-01-complete. Two units total USD 24. Send Create Order before Get Last Order. Provider scenario changes are made in appsettings.json, followed by an API restart.",
+          "item": [
+            {
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "const order = pm.response.json();",
+                      "pm.collectionVariables.set(\"lesson01OrderId\", order.id);",
+                      "pm.test(\"Known checkout response\", () => {",
+                      "  pm.expect(pm.response.code).to.be.oneOf([201, 202, 409]);",
+                      "  pm.expect(order.total).to.eql(24);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "url": "{{baseUrl}}/orders",
+                "body": {
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  },
+                  "mode": "raw",
+                  "raw": "{\"quantity\":2}"
+                },
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST"
+              },
+              "name": "Create Order",
+              "id": "36ff8d30-4546-59b0-8c07-73cf8316d349"
+            },
+            {
+              "name": "Get Last Order",
+              "request": {
+                "method": "GET",
+                "url": "{{baseUrl}}/orders/{{lesson01OrderId}}"
+              },
+              "id": "b7b9aa7f-ecad-5c5e-b3e4-193a4016005e"
+            }
+          ]
+        },
+        {
+          "id": "7f4a062e-ab1b-5532-81ea-bf86867b8e68",
+          "name": "Lesson 02 - Names That Reveal Intent",
+          "description": "Continue from lesson-01-complete and implement Lesson 2; compare with lesson-02-complete. The completed fixture is 199 cents per item. Tests deliberately fail on the incorrect first attempt. Send a Create Order request before Get Last Order. Run this folder for Lesson 2, not the entire course collection.",
+          "item": [
+            {
+              "name": "Create Order - two units",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/orders",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"quantity\": 2}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "const order = pm.response.json();",
+                      "pm.collectionVariables.set(\"lesson02OrderId\", order.id);",
+                      "pm.test(\"2 unit(s): expected USD 3.98\", () => {",
+                      "  pm.response.to.have.status(201);",
+                      "  pm.expect(order.total).to.eql(3.98);",
+                      "  pm.expect(order.currency).to.eql(\"USD\");",
+                      "  pm.expect(order.status).to.eql(\"Confirmed\");",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "id": "c85a8e23-025a-581d-a51d-585b40401a2d"
+            },
+            {
+              "name": "Create Order - one unit",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/orders",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"quantity\": 1}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "const order = pm.response.json();",
+                      "pm.collectionVariables.set(\"lesson02OrderId\", order.id);",
+                      "pm.test(\"1 unit(s): expected USD 1.99\", () => {",
+                      "  pm.response.to.have.status(201);",
+                      "  pm.expect(order.total).to.eql(1.99);",
+                      "  pm.expect(order.currency).to.eql(\"USD\");",
+                      "  pm.expect(order.status).to.eql(\"Confirmed\");",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "id": "a0ee4607-c022-5758-b249-c74ac0d8c0eb"
+            },
+            {
+              "name": "Create Order - three units",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/orders",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"quantity\": 3}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "const order = pm.response.json();",
+                      "pm.collectionVariables.set(\"lesson02OrderId\", order.id);",
+                      "pm.test(\"3 unit(s): expected USD 5.97\", () => {",
+                      "  pm.response.to.have.status(201);",
+                      "  pm.expect(order.total).to.eql(5.97);",
+                      "  pm.expect(order.currency).to.eql(\"USD\");",
+                      "  pm.expect(order.status).to.eql(\"Confirmed\");",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "id": "ef258b82-be0e-5460-836c-f18efff79da8"
+            },
+            {
+              "name": "Get Last Order",
+              "request": {
+                "method": "GET",
+                "url": "{{baseUrl}}/orders/{{lesson02OrderId}}"
+              },
+              "id": "02de27ef-b11e-5022-9281-f886501e41c8"
+            },
+            {
+              "name": "Reject zero quantity",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/orders",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"quantity\":0}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Zero quantity is rejected\", () => pm.response.to.have.status(400));"
+                    ]
+                  }
+                }
+              ],
+              "id": "ca99a56d-c1a5-5e36-bb58-c26d02735f7a"
+            }
+          ]
+        }
+      ]
     }
   ]
 }

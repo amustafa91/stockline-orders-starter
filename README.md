@@ -30,7 +30,7 @@ dotnet run --project ./src/Stockline.Api/Stockline.csproj
 
 The local **Stockline** launch profile in `src/Stockline.Api/Properties/launchSettings.json` binds the API to **http://localhost:7375**, matching the collection's `baseUrl` variable. No certificate setup, extra URL argument, or Postman environment is needed. You can select the profile explicitly with `--launch-profile Stockline`. This HTTP address is for the local course exercise.
 
-Import postman/Stockline Orders.postman_collection.json into Postman and open Create Order. In Postman's lightweight client, paste this request into its URL field.
+Import `postman/Stockline Orders.postman_collection.json` into Postman. In **Stockline Orders → Module 01 - Clean Code Foundations → Lesson 01 - Isolate the Payment Provider**, open **Create Order**. In Postman's lightweight client, paste this request into its URL field.
 
 ~~~text
 curl --request POST 'http://localhost:7375/orders' --header 'Content-Type: application/json' --data '{"quantity":2}'
@@ -39,6 +39,26 @@ curl --request POST 'http://localhost:7375/orders' --header 'Content-Type: appli
 The result is HTTP 201 with Confirmed. The synthetic order contains two units priced at USD 12 each, for USD 24 total. Get Last Order reads the order created by your latest request.
 
 Opening `/` in a browser returns 404: this API has no homepage. Use **POST /orders** with the JSON body shown above. If port 7375 is occupied, stop your other Stockline instance; or choose another HTTP port with `-- --urls http://localhost:7376` and change the collection's `baseUrl` to match. The launch profile is for local development and is not deployed. The setup and Postman collection use the same local address; the exercise and expected results are unchanged.
+
+## Postman course folders
+
+Import the single `postman/Stockline Orders.postman_collection.json` file. All code checkpoints use the same collection and folder structure:
+
+```text
+Stockline Orders
+└── Module 01 - Clean Code Foundations
+    ├── Lesson 01 - Isolate the Payment Provider
+    │   ├── Create Order
+    │   └── Get Last Order
+    └── Lesson 02 - Names That Reveal Intent
+        ├── Create Order - two units
+        ├── Create Order - one unit
+        ├── Create Order - three units
+        ├── Get Last Order
+        └── Reject zero quantity
+```
+
+Open or run only the current lesson folder against its matching code. Lesson 1 uses USD 12 per item; the completed Lesson 2 fixture uses 199 cents per item. A separate saved order identifier for each lesson prevents one lesson's request from replacing the other's value. Send a Create Order request before Get Last Order; restarting the API clears stored orders. The collection-level `baseUrl` is **http://localhost:7375** for every lesson. Future lessons belong under this collection, rather than separate collections.
 
 ## What each folder does
 
