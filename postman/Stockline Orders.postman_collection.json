@@ -2,7 +2,7 @@
   "variable": [
     {
       "key": "baseUrl",
-      "value": "http://localhost:5375"
+      "value": "https://localhost:7375"
     },
     {
       "key": "orderId",

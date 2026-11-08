@@ -24,21 +24,29 @@ Git must be installed locally. This repository is public, so a GitHub account is
 
 Run this command from the folder containing the solution.
 
+First, trust the local ASP.NET Core HTTPS development certificate (once per computer):
+
+~~~text
+dotnet dev-certs https --trust
+~~~
+
+Accept the operating system's certificate prompt yourself if one appears, then start the app:
+
 ~~~powershell
 dotnet run --project ./src/Stockline.Api/Stockline.csproj
 ~~~
 
-The local **Stockline** launch profile in `src/Stockline.Api/Properties/launchSettings.json` binds the API to **http://localhost:5375**, matching the collection's `baseUrl` variable. No extra URL argument or Postman environment is needed. You can select the profile explicitly with `--launch-profile Stockline`.
+The local **Stockline** launch profile in `src/Stockline.Api/Properties/launchSettings.json` binds the API to **https://localhost:7375**, matching the collection's `baseUrl` variable. No extra URL argument or Postman environment is needed. You can select the profile explicitly with `--launch-profile Stockline`. Keep Postman's SSL certificate verification enabled. If it reports a certificate error, confirm the development certificate is trusted and use `localhost`, matching the certificate name.
 
 Import postman/Stockline Orders.postman_collection.json into Postman and open Create Order. In Postman's lightweight client, paste this request into its URL field.
 
 ~~~text
-curl --request POST 'http://localhost:5375/orders' --header 'Content-Type: application/json' --data '{"quantity":2}'
+curl --request POST 'https://localhost:7375/orders' --header 'Content-Type: application/json' --data '{"quantity":2}'
 ~~~
 
 The result is HTTP 201 with Confirmed. The synthetic order contains two units priced at USD 12 each, for USD 24 total. Get Last Order reads the order created by your latest request.
 
-Opening `/` in a browser returns 404: this API has no homepage. Use **POST /orders** with the JSON body shown above. If port 5375 is occupied, stop your other Stockline instance; or choose another port with `-- --urls http://localhost:5376` and change the collection's `baseUrl` to match. The launch profile is for local development and is not deployed.
+Opening `/` in a browser returns 404: this API has no homepage. Use **POST /orders** with the JSON body shown above. If port 7375 is occupied, stop your other Stockline instance; or choose another HTTPS port with `-- --urls https://localhost:7376` and change the collection's `baseUrl` to match. The launch profile is for local development and is not deployed. The already-published Lesson 1 uses HTTP; this setup update changes only the local address, not its exercise or expected results.
 
 ## What each folder does
 
