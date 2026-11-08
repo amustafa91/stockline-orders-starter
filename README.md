@@ -25,8 +25,10 @@ Git must be installed locally. This repository is public, so a GitHub account is
 Run this command from the folder containing the solution.
 
 ~~~powershell
-dotnet run --project ./src/Stockline.Api/Stockline.csproj -- --urls http://localhost:5375
+dotnet run --project ./src/Stockline.Api/Stockline.csproj
 ~~~
+
+The local **Stockline** launch profile in `src/Stockline.Api/Properties/launchSettings.json` binds the API to **http://localhost:5375**, matching the collection's `baseUrl` variable. No extra URL argument or Postman environment is needed. You can select the profile explicitly with `--launch-profile Stockline`.
 
 Import postman/Stockline Orders.postman_collection.json into Postman and open Create Order. In Postman's lightweight client, paste this request into its URL field.
 
@@ -35,6 +37,8 @@ curl --request POST 'http://localhost:5375/orders' --header 'Content-Type: appli
 ~~~
 
 The first result is HTTP 201 with Confirmed. The synthetic order contains two units priced at USD 12 each, for USD 24 total. Get Last Order reads the order created by your latest request.
+
+Opening `/` in a browser returns 404: this API has no homepage. Use **POST /orders** with the JSON body shown above. If port 5375 is occupied, stop your other Stockline instance; or choose another port with `-- --urls http://localhost:5376` and change the collection's `baseUrl` to match. The launch profile is for local development and is not deployed.
 
 ## What each folder does
 
@@ -45,7 +49,10 @@ The first result is HTTP 201 with Confirmed. The synthetic order contains two un
 | src/Stockline.Api/Payments | Local simulated payment provider |
 | src/Stockline.Api/appsettings.json | Provider reply and scenario used in the lesson |
 | src/Stockline.Api/Program.cs | Registers services and maps controllers |
+| src/Stockline.Api/Properties/launchSettings.json | Local development URL shared with Postman |
 | postman | Requests used in the course |
+
+Comments explain intentional teaching shortcuts and decisions. They do not replace the lesson or describe every statement. The starter intentionally keeps the Lesson 1 problem; the `lesson-01-complete` branch contains its solution. After completing Lesson 1, use your own working copy for Lesson 2, or switch to `lesson-01-complete` to begin from the matching checkpoint.
 
 ## Lesson 1 · One provider changes its wording
 
