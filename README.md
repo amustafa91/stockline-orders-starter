@@ -23,7 +23,27 @@ Install .NET 10 SDK, Git, VS Code with C# support, and Postman. From the solutio
 dotnet run --project ./src/Stockline.Api/Stockline.csproj
 ```
 
-The Stockline launch profile binds to **http://localhost:7375**. Import `postman/Stockline Orders.postman_collection.json`; its collection is named **Stockline Orders - Lesson 2**, and its `baseUrl` is the same **http://localhost:7375**. No certificate setup or Postman environment is needed. This HTTP address is for the local course exercise.
+The Stockline launch profile binds to **http://localhost:7375**. Import `postman/Stockline Orders.postman_collection.json`; the single course collection is named **Stockline Orders**, and its `baseUrl` is the same **http://localhost:7375**. No certificate setup or Postman environment is needed. This HTTP address is for the local course exercise.
+
+## Postman course folders
+
+Import the single `postman/Stockline Orders.postman_collection.json` file. All code checkpoints use the same collection and folder structure:
+
+```text
+Stockline Orders
+└── Module 01 - Clean Code Foundations
+    ├── Lesson 01 - Isolate the Payment Provider
+    │   ├── Create Order
+    │   └── Get Last Order
+    └── Lesson 02 - Names That Reveal Intent
+        ├── Create Order - two units
+        ├── Create Order - one unit
+        ├── Create Order - three units
+        ├── Get Last Order
+        └── Reject zero quantity
+```
+
+Open or run only the current lesson folder against its matching code. Lesson 1 uses USD 12 per item; the completed Lesson 2 fixture uses 199 cents per item. A separate saved order identifier for each lesson prevents one lesson's request from replacing the other's value. Send a Create Order request before Get Last Order; restarting the API clears stored orders. The collection-level `baseUrl` is **http://localhost:7375** for every lesson. Future lessons belong under this collection, rather than separate collections.
 
 ## Follow the change in OrderStore.cs
 
@@ -44,7 +64,7 @@ The Stockline launch profile binds to **http://localhost:7375**. Import `postman
 | Quantity zero | HTTP 400 |
 | Temporarily use 1200 cents, two units | USD 24.00; restore 199 afterward |
 
-The Postman tests target the completed 199-cent fixture with the Approve scenario. They intentionally fail on the incorrect attempt. Re-import the updated collection when switching checkpoints; the old Lesson 1 collection expects USD 24. The provider outcome exercises from Lesson 1 still apply, but their totals now use this lesson's price.
+The Postman tests target the completed 199-cent fixture with the Approve scenario. They intentionally fail on the incorrect attempt. Use the folder for the active lesson: Lesson 1 expects USD 24 for two units; completed Lesson 2 expects USD 3.98. Do not run all lesson folders against a single checkpoint. The provider outcome exercises from Lesson 1 still apply, but their totals now use this lesson's price.
 
 ## Exercise
 
