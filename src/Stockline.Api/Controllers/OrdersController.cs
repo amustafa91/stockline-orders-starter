@@ -2,24 +2,21 @@ using Microsoft.AspNetCore.Mvc;
 
 [ApiController]
 [Route("orders")]
-public sealed class OrdersController(OrderStore store, IPaymentGateway payments, ProductCatalog catalog, OrderPricing pricing)
+public sealed class OrdersController(PlaceOrder placeOrder, OrderStore store)
     : ControllerBase
 {
     [HttpPost]
     public async Task<IActionResult> Place(
         [FromBody] CheckoutRequest request, CancellationToken cancellationToken)
     {
-        if (!request.IsValid)
-            return BadRequest(new { error = "Provide a SKU and quantity from 1 to 100." });
-
-        var product = catalog.Find(request.Sku!);
-        if (product is null)
-            return BadRequest(new { error = "Unknown product SKU." });
-        var total = pricing.Calculate(product.UnitPrice, request.Quantity);
-        var order = store.Start(product, request.Quantity, total);
-        var decision = await payments.AuthorizeAsync(
-            order.OperationKey, order.Total, cancellationToken);
-        return CheckoutHttp.ToResult(store.Complete(order, decision));
+        var result = await placeOrder.Execute(
+            new PlaceOrderCommand(request.Sku, request.Quantity), cancellationToken);
+        return result switch
+        {
+            OrderRejected rejected => BadRequest(new { error = rejected.Error }),
+            OrderPlaced placed => CheckoutHttp.ToResult(placed.Order),
+            _ => throw new InvalidOperationException("Unexpected checkout result.")
+        };
     }
 
     [HttpGet("{id}")]

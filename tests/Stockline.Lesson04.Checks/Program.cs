@@ -12,7 +12,8 @@ var pricing = new OrderPricing();
 var catalog = new ProductCatalog();
 var store = new OrderStore();
 var gateway = new RecordingGateway();
-var controller = new OrdersController(store, gateway, catalog, pricing);
+var useCase = new PlaceOrder(catalog, pricing, store, gateway);
+var controller = new OrdersController(useCase, store);
 foreach (var item in new[] { ("BRG-204", 24m), ("CAB-105", 15m) })
 {
     var response = await controller.Place(new(item.Item1, 2), default);
@@ -63,12 +64,37 @@ var config = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<str
 var provider = new SimulatedProvider(config);
 var http = new HttpClient(provider) { BaseAddress = new Uri("http://stockline-simulator.test") };
 var adapter = new PaymentAdapter(new FixtureHttpFactory(http));
-var real = new OrdersController(new OrderStore(), adapter, catalog, pricing);
+var realStore = new OrderStore();
+var real = new OrdersController(new PlaceOrder(catalog, pricing, realStore, adapter), realStore);
 await real.Place(new("CAB-105",2),default);
 Check(provider.Events.Any(e => e.Action == "Authorized" && e.Amount == 15m), "Actual adapter/provider authorizes catalog amount 15");
 var eventCount=provider.Events.Count;
 await real.Place(new("UNKNOWN",2),default);
 Check(provider.Events.Count == eventCount, "Unknown SKU produces no actual provider event");
+// Direct application tests do not construct a controller or inspect MVC results.
+var directStore = new OrderStore();
+var directGateway = new RecordingGateway();
+var workflow = new PlaceOrder(catalog, pricing, directStore, directGateway);
+var placed = (OrderPlaced)await workflow.Execute(new("BRG-204", 10), default);
+Check(placed.Order.Total == 108m && directGateway.LastAmount == 108m && directGateway.Calls == 1,
+    "Direct workflow: one authorization for the captured wholesale amount");
+Check(directStore.Find(placed.Order.Id) == placed.Order, "Direct workflow stores completed order");
+foreach (var bad in new[] { new PlaceOrderCommand(null, 2), new("UNKNOWN", 2), new("BRG-204", 0), new("BRG-204", 101) })
+    Check(await workflow.Execute(bad, default) is OrderRejected && directGateway.Calls == 1,
+        $"Direct workflow rejects before payment: {bad}");
+var nextDirect = (OrderPlaced)await workflow.Execute(new("BRG-204", 1), default);
+Check(nextDirect.Order.Id == "ORD-1049", "Direct rejected commands create no orders");
+foreach (var decision in new[] { PaymentDecision.Declined, PaymentDecision.Unknown })
+{
+    directGateway.Decision = decision;
+    var outcome = (OrderPlaced)await workflow.Execute(new("CAB-105", 2), default);
+    Check(outcome.Order.Status == (decision == PaymentDecision.Declined ? "Declined" : "PendingReconciliation"),
+        $"Direct workflow preserves {decision}");
+}
+using var directCancellation = new CancellationTokenSource(); directCancellation.Cancel();
+try { await workflow.Execute(new("CAB-105", 2), directCancellation.Token); throw new Exception("Direct cancellation ignored"); }
+catch (OperationCanceledException) { Check(directGateway.LastToken == directCancellation.Token, "Direct workflow forwards cancellation"); }
+
 Console.WriteLine($"Verified {passed} checks.");
 
 sealed class RecordingGateway : IPaymentGateway
