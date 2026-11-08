@@ -48,6 +48,22 @@ The first result is HTTP 201 with Confirmed. The synthetic order contains two un
 
 Opening `/` in a browser returns 404: this API has no homepage. Use **POST /orders** with the JSON body shown above. If port 7375 is occupied, stop your other Stockline instance; or choose another HTTPS port with `-- --urls https://localhost:7376` and change the collection's `baseUrl` to match. The launch profile is for local development and is not deployed. The already-published Lesson 1 uses HTTP; this setup update changes only the local address, not its exercise or expected results.
 
+### If Postman rejects the HTTPS certificate
+
+Trusting the development certificate in Windows does not establish that every API client will accept it. If Postman reports `Unable to verify the first certificate` or a self-signed certificate error after the Windows trust step, keep SSL certificate verification enabled and add the public development certificate to Postman's CA certificates.
+
+From PowerShell, export the public certificate to your temporary folder:
+
+~~~powershell
+dotnet dev-certs https --export-path "$env:TEMP/stockline-localhost-public.pem" --format PEM
+~~~
+
+This command exports the public certificate only. In Postman, open **Settings → Certificates**, enable **CA Certificates**, and select `%TEMP%\stockline-localhost-public.pem` using the file picker. Use the **CA Certificates** section; this application does not require a client certificate or a private key. Repeat Create Order at `https://localhost:7375/orders` and confirm that the SSL error is gone.
+
+Do this on each development computer if its Postman client needs it. Export that computer's own development certificate; do not download someone else's certificate or commit certificate files to this repository.
+
+References: [Microsoft's certificate export options](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-dev-certs) and [Postman's CA certificate instructions](https://learning.postman.com/docs/use/send-requests/authorization/certificates/).
+
 ## What each folder does
 
 | Location | Purpose |
