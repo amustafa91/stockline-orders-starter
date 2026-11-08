@@ -20,6 +20,7 @@ public sealed class OrdersController(OrderStore store, IHttpClientFactory client
                 new ProviderRequest(order.OperationKey, order.Total), cancellationToken);
             response.EnsureSuccessStatusCode();
             var reply = await response.Content.ReadFromJsonAsync<ProviderReply>(cancellationToken);
+            // Intentional Lesson 1 problem: checkout depends on the provider's exact wording.
             decision = reply?.Code switch
             {
                 "APPROVED" => PaymentDecision.Approved,
@@ -29,6 +30,7 @@ public sealed class OrdersController(OrderStore store, IHttpClientFactory client
         }
         catch (HttpRequestException)
         {
+            // A lost reply does not prove payment failed. Keep the outcome unknown.
             decision = PaymentDecision.Unknown;
         }
         return CheckoutHttp.ToResult(store.Complete(order, decision));
