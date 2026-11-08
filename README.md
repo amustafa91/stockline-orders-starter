@@ -26,6 +26,22 @@ dotnet run --project ./src/Stockline.Api/Stockline.csproj
 
 Accept any OS certificate prompt yourself. The Stockline launch profile binds to **https://localhost:7375**. Import `postman/Stockline Orders.postman_collection.json`; its collection is named **Stockline Orders - Lesson 2**, and its `baseUrl` matches. Keep Postman's SSL certificate verification enabled. If your Postman installation needs the local certificate added to its CA trust, follow its certificate settings rather than disabling verification. This certificate is only for local development.
 
+### If Postman rejects the HTTPS certificate
+
+Trusting the development certificate in Windows does not establish that every API client will accept it. If Postman reports `Unable to verify the first certificate` or a self-signed certificate error after the Windows trust step, keep SSL certificate verification enabled and add the public development certificate to Postman's CA certificates.
+
+From PowerShell, export the public certificate to your temporary folder:
+
+~~~powershell
+dotnet dev-certs https --export-path "$env:TEMP/stockline-localhost-public.pem" --format PEM
+~~~
+
+This command exports the public certificate only. In Postman, open **Settings → Certificates**, enable **CA Certificates**, and select `%TEMP%\stockline-localhost-public.pem` using the file picker. Use the **CA Certificates** section; this application does not require a client certificate or a private key. Repeat Create Order at `https://localhost:7375/orders` and confirm that the SSL error is gone.
+
+Do this on each development computer if its Postman client needs it. Export that computer's own development certificate; do not download someone else's certificate or commit certificate files to this repository.
+
+References: [Microsoft's certificate export options](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-dev-certs) and [Postman's CA certificate instructions](https://learning.postman.com/docs/use/send-requests/authorization/certificates/).
+
 ## Follow the change in OrderStore.cs
 
 1. Confirm Lesson 1 still returns HTTP 201, Confirmed, total 24 for two units.
