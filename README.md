@@ -1,4 +1,4 @@
-# Stockline Orders — Module 2: Lesson 02 completed — When Does a Pricing Policy Earn Its Interface
+# Stockline Orders — Module 2: Lesson 03 completed — A Substitute Must Keep the Promise
 
 Prerequisites: .NET 10 SDK, Git, a C# editor and Postman. Git manages your local code history; GitHub hosts the public repository. You do not need a GitHub account to clone it.
 
@@ -22,8 +22,8 @@ Clone once. If you already have a clone, save or commit your own edits before sw
 ```powershell
 git clone https://github.com/amustafa91/stockline-orders-starter.git
 cd stockline-orders-starter
-git switch module-02-lesson-01-complete
-git switch -c my-module-02-lesson-02
+git switch module-02-lesson-02-complete
+git switch -c my-module-02-lesson-03
 ```
 
 The command selects this lesson's starting code. This page's completed branch is for comparison after your attempt. The delivered ZIPs remain an equivalent option, as shown in the videos.

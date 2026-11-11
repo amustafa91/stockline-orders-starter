@@ -120,6 +120,8 @@ var extendedPricing = new OrderPricing([new WholesaleDiscount(), new CableCampai
 Check(extendedPricing.Calculate(new("BRG-204", 12m, "USD"), 10) == 96m,
     "An added policy changes pricing through composition");
 
+await GatewayContractChecks.Run(Check);
+
 Console.WriteLine($"Verified {passed} checks.");
 
 sealed class RecordingGateway : IPaymentGateway
