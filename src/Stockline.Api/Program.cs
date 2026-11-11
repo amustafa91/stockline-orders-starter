@@ -3,6 +3,8 @@ builder.Services.AddControllers();
 builder.Services.AddScoped<IPaymentGateway, PaymentAdapter>();
 builder.Services.AddSingleton<OrderStore>();
 builder.Services.AddSingleton<ProductCatalog>();
+builder.Services.AddSingleton<IDiscountPolicy, WholesaleDiscount>();
+builder.Services.AddSingleton<IDiscountPolicy, CableCampaign>();
 builder.Services.AddSingleton<OrderPricing>();
 builder.Services.AddScoped<PlaceOrder>();
 builder.Services.AddSingleton<SimulatedProvider>();

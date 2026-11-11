@@ -8,7 +8,7 @@ void Check(bool value, string label)
     if (!value) throw new Exception(label);
     Console.WriteLine($"PASS {++passed}: {label}");
 }
-var pricing = new OrderPricing();
+var pricing = new OrderPricing([new WholesaleDiscount(), new CableCampaign()]);
 var catalog = new ProductCatalog();
 var store = new OrderStore();
 var gateway = new RecordingGateway();
@@ -113,6 +113,13 @@ foreach (var (sku, quantity, expected, name) in new[]
         $"Captured and authorized once: {name}");
 }
 
+var equalRatePricing = new OrderPricing([new WholesaleDiscount(), new FixedOfferPolicy("tie", 0.10m)]);
+Check(equalRatePricing.SelectOffer(new("BRG-204", 12m, "USD"), 10)?.Code == "wholesale",
+    "Equal rates preserve registration order");
+var extendedPricing = new OrderPricing([new WholesaleDiscount(), new CableCampaign(), new FixedOfferPolicy("fixture", 0.20m)]);
+Check(extendedPricing.Calculate(new("BRG-204", 12m, "USD"), 10) == 96m,
+    "An added policy changes pricing through composition");
+
 Console.WriteLine($"Verified {passed} checks.");
 
 sealed class RecordingGateway : IPaymentGateway
@@ -127,3 +134,8 @@ sealed class RecordingGateway : IPaymentGateway
 }
 sealed class FixtureHttpFactory(HttpClient client) : IHttpClientFactory
 { public HttpClient CreateClient(string name) => client; }
+
+sealed class FixedOfferPolicy(string code, decimal rate) : IDiscountPolicy
+{
+    public DiscountOffer? GetOffer(Product product, int quantity) => new(code, rate);
+}
