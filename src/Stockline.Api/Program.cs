@@ -1,17 +1,11 @@
 var builder = WebApplication.CreateBuilder(args);
+builder.Host.UseDefaultServiceProvider(options =>
+{
+    options.ValidateScopes = true;
+    options.ValidateOnBuild = true;
+});
 builder.Services.AddControllers();
-builder.Services.AddScoped<IPaymentGateway, PaymentAdapter>();
-builder.Services.AddSingleton<OrderStore>();
-builder.Services.AddSingleton<ProductCatalog>();
-builder.Services.AddSingleton<IDiscountPolicy, WholesaleDiscount>();
-builder.Services.AddSingleton<IDiscountPolicy, CableCampaign>();
-builder.Services.AddSingleton<OrderPricing>();
-builder.Services.AddScoped<PlaceOrder>();
-builder.Services.AddSingleton<SimulatedProvider>();
-// This handler simulates a provider locally; the .test address never reaches a payment service.
-builder.Services.AddHttpClient("provider", client => client.BaseAddress = new Uri("http://stockline-simulator.test"))
-    .ConfigurePrimaryHttpMessageHandler(services => services.GetRequiredService<SimulatedProvider>())
-    .SetHandlerLifetime(Timeout.InfiniteTimeSpan);
+builder.Services.AddStocklineCheckout();
 await using var app = builder.Build();
 
 app.MapControllers();

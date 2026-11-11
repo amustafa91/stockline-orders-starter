@@ -122,6 +122,8 @@ Check(extendedPricing.Calculate(new("BRG-204", 12m, "USD"), 10) == 96m,
 
 await GatewayContractChecks.Run(Check);
 
+await CompositionChecks.Run(Check);
+
 Console.WriteLine($"Verified {passed} checks.");
 
 sealed class RecordingGateway : IPaymentGateway
