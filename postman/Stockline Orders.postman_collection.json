@@ -17,6 +17,10 @@
     {
       "key": "lesson02OrderId",
       "value": ""
+    },
+    {
+      "key": "m02OrderId",
+      "value": ""
     }
   ],
   "item": [
@@ -600,6 +604,563 @@
                 "method": "GET",
                 "url": "{{baseUrl}}/orders/{{orderId}}"
               }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Module 02 - SOLID Principles",
+      "item": [
+        {
+          "name": "Lesson 01 - What Happens When Discounts Overlap",
+          "item": [
+            {
+              "name": "No offer — USD 30.00",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"sku\": \"CAB-105\",\n  \"quantity\": 4\n}"
+                },
+                "url": "{{baseUrl}}/orders"
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Created with expected total\", () => { pm.response.to.have.status(201); pm.expect(pm.response.json().total).to.eql(30); });",
+                      "pm.collectionVariables.set(\"m02OrderId\", pm.response.json().id);"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Wholesale only — USD 108.00",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"sku\": \"BRG-204\",\n  \"quantity\": 10\n}"
+                },
+                "url": "{{baseUrl}}/orders"
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Created with expected total\", () => { pm.response.to.have.status(201); pm.expect(pm.response.json().total).to.eql(108); });",
+                      "pm.collectionVariables.set(\"m02OrderId\", pm.response.json().id);"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Campaign only — USD 31.88",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"sku\": \"CAB-105\",\n  \"quantity\": 5\n}"
+                },
+                "url": "{{baseUrl}}/orders"
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Created with expected total\", () => { pm.response.to.have.status(201); pm.expect(pm.response.json().total).to.eql(31.88); });",
+                      "pm.collectionVariables.set(\"m02OrderId\", pm.response.json().id);"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Both offers — USD 63.75",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"sku\": \"CAB-105\",\n  \"quantity\": 10\n}"
+                },
+                "url": "{{baseUrl}}/orders"
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Created with expected total\", () => { pm.response.to.have.status(201); pm.expect(pm.response.json().total).to.eql(63.75); });",
+                      "pm.collectionVariables.set(\"m02OrderId\", pm.response.json().id);"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Read the last stored order",
+              "request": {
+                "method": "GET",
+                "url": "{{baseUrl}}/orders/{{m02OrderId}}"
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Stored order found\", () => pm.response.to.have.status(200));"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Lesson 02 - When Does a Pricing Policy Earn Its Interface",
+          "item": [
+            {
+              "name": "No offer — USD 30.00",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"sku\": \"CAB-105\",\n  \"quantity\": 4\n}"
+                },
+                "url": "{{baseUrl}}/orders"
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Created with expected total\", () => { pm.response.to.have.status(201); pm.expect(pm.response.json().total).to.eql(30); });",
+                      "pm.collectionVariables.set(\"m02OrderId\", pm.response.json().id);"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Wholesale only — USD 108.00",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"sku\": \"BRG-204\",\n  \"quantity\": 10\n}"
+                },
+                "url": "{{baseUrl}}/orders"
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Created with expected total\", () => { pm.response.to.have.status(201); pm.expect(pm.response.json().total).to.eql(108); });",
+                      "pm.collectionVariables.set(\"m02OrderId\", pm.response.json().id);"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Campaign only — USD 31.88",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"sku\": \"CAB-105\",\n  \"quantity\": 5\n}"
+                },
+                "url": "{{baseUrl}}/orders"
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Created with expected total\", () => { pm.response.to.have.status(201); pm.expect(pm.response.json().total).to.eql(31.88); });",
+                      "pm.collectionVariables.set(\"m02OrderId\", pm.response.json().id);"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Both offers — USD 63.75",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"sku\": \"CAB-105\",\n  \"quantity\": 10\n}"
+                },
+                "url": "{{baseUrl}}/orders"
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Created with expected total\", () => { pm.response.to.have.status(201); pm.expect(pm.response.json().total).to.eql(63.75); });",
+                      "pm.collectionVariables.set(\"m02OrderId\", pm.response.json().id);"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Read the last stored order",
+              "request": {
+                "method": "GET",
+                "url": "{{baseUrl}}/orders/{{m02OrderId}}"
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Stored order found\", () => pm.response.to.have.status(200));"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Lesson 03 - A Substitute Must Keep the Promise",
+          "item": [
+            {
+              "name": "No offer — USD 30.00",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"sku\": \"CAB-105\",\n  \"quantity\": 4\n}"
+                },
+                "url": "{{baseUrl}}/orders"
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Created with expected total\", () => { pm.response.to.have.status(201); pm.expect(pm.response.json().total).to.eql(30); });",
+                      "pm.collectionVariables.set(\"m02OrderId\", pm.response.json().id);"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Wholesale only — USD 108.00",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"sku\": \"BRG-204\",\n  \"quantity\": 10\n}"
+                },
+                "url": "{{baseUrl}}/orders"
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Created with expected total\", () => { pm.response.to.have.status(201); pm.expect(pm.response.json().total).to.eql(108); });",
+                      "pm.collectionVariables.set(\"m02OrderId\", pm.response.json().id);"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Campaign only — USD 31.88",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"sku\": \"CAB-105\",\n  \"quantity\": 5\n}"
+                },
+                "url": "{{baseUrl}}/orders"
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Created with expected total\", () => { pm.response.to.have.status(201); pm.expect(pm.response.json().total).to.eql(31.88); });",
+                      "pm.collectionVariables.set(\"m02OrderId\", pm.response.json().id);"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Both offers — USD 63.75",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"sku\": \"CAB-105\",\n  \"quantity\": 10\n}"
+                },
+                "url": "{{baseUrl}}/orders"
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Created with expected total\", () => { pm.response.to.have.status(201); pm.expect(pm.response.json().total).to.eql(63.75); });",
+                      "pm.collectionVariables.set(\"m02OrderId\", pm.response.json().id);"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Read the last stored order",
+              "request": {
+                "method": "GET",
+                "url": "{{baseUrl}}/orders/{{m02OrderId}}"
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Stored order found\", () => pm.response.to.have.status(200));"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Lesson 04 - Dependency Direction Is More Than DI Registration",
+          "item": [
+            {
+              "name": "No offer — USD 30.00",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"sku\": \"CAB-105\",\n  \"quantity\": 4\n}"
+                },
+                "url": "{{baseUrl}}/orders"
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Created with expected total\", () => { pm.response.to.have.status(201); pm.expect(pm.response.json().total).to.eql(30); });",
+                      "pm.collectionVariables.set(\"m02OrderId\", pm.response.json().id);"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Wholesale only — USD 108.00",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"sku\": \"BRG-204\",\n  \"quantity\": 10\n}"
+                },
+                "url": "{{baseUrl}}/orders"
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Created with expected total\", () => { pm.response.to.have.status(201); pm.expect(pm.response.json().total).to.eql(108); });",
+                      "pm.collectionVariables.set(\"m02OrderId\", pm.response.json().id);"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Campaign only — USD 31.88",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"sku\": \"CAB-105\",\n  \"quantity\": 5\n}"
+                },
+                "url": "{{baseUrl}}/orders"
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Created with expected total\", () => { pm.response.to.have.status(201); pm.expect(pm.response.json().total).to.eql(31.88); });",
+                      "pm.collectionVariables.set(\"m02OrderId\", pm.response.json().id);"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Both offers — USD 63.75",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"sku\": \"CAB-105\",\n  \"quantity\": 10\n}"
+                },
+                "url": "{{baseUrl}}/orders"
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Created with expected total\", () => { pm.response.to.have.status(201); pm.expect(pm.response.json().total).to.eql(63.75); });",
+                      "pm.collectionVariables.set(\"m02OrderId\", pm.response.json().id);"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Read the last stored order",
+              "request": {
+                "method": "GET",
+                "url": "{{baseUrl}}/orders/{{m02OrderId}}"
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Stored order found\", () => pm.response.to.have.status(200));"
+                    ]
+                  }
+                }
+              ]
             }
           ]
         }
