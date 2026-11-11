@@ -13,7 +13,7 @@ public sealed class PlaceOrder(
         if (product is null)
             return new OrderRejected("Unknown product SKU.");
 
-        var total = pricing.Calculate(product.UnitPrice, command.Quantity);
+        var total = pricing.Calculate(product, command.Quantity);
         var order = store.Start(product, command.Quantity, total);
         var decision = await payments.AuthorizeAsync(
             order.OperationKey, order.Total, cancellationToken);

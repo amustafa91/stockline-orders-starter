@@ -1,4 +1,4 @@
-# Stockline Orders — Module 2: Starting checkpoint
+# Stockline Orders — Module 2: Lesson 01 completed — What Happens When Discounts Overlap
 
 Prerequisites: .NET 10 SDK, Git, a C# editor and Postman. Git manages your local code history; GitHub hosts the public repository. You do not need a GitHub account to clone it.
 

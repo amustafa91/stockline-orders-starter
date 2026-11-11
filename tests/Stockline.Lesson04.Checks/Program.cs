@@ -48,13 +48,13 @@ foreach (var (decision, status, responseCode) in new[] { (PaymentDecision.Declin
 gateway.Decision = PaymentDecision.Approved;
 foreach (var (quantity, expected) in new[] { (9, 108m), (10, 108m), (11, 118.80m) })
 {
-    Check(pricing.Calculate(12m, quantity) == expected, $"Pricing boundary {quantity}: {expected}");
+    Check(pricing.Calculate(new Product("BRG-204", 12m, "USD"), quantity) == expected, $"Pricing boundary {quantity}: {expected}");
     var priced = (Order)((CreatedResult)await controller.Place(new("BRG-204", quantity), default)).Value!;
     Check(priced.Total == expected && gateway.LastAmount == expected, $"Receipt/payment boundary {quantity}");
 }
-Check(pricing.Calculate(1.005m, 1) == 1.01m, "Positive midpoint rounds away from zero");
-Check(pricing.Calculate(0.335m, 3) == 1.01m, "Round the final total, not each unit");
-Check(pricing.Calculate(7.5m, 10) == 67.50m, "Wholesale CAB price");
+Check(pricing.Calculate(new Product("FIXTURE", 1.005m, "USD"), 1) == 1.01m, "Positive midpoint rounds away from zero");
+Check(pricing.Calculate(new Product("FIXTURE", 0.335m, "USD"), 3) == 1.01m, "Round the final total, not each unit");
+Check(pricing.Calculate(new Product("CAB-105", 7.50m, "USD"), 10) == 63.75m, "Campaign beats wholesale");
 using var cts = new CancellationTokenSource(); cts.Cancel();
 try { await controller.Place(new("BRG-204", 2), cts.Token); throw new Exception("Cancellation ignored"); }
 catch (OperationCanceledException) { Check(gateway.LastToken == cts.Token, "Cancellation reaches gateway"); }
@@ -95,6 +95,24 @@ using var directCancellation = new CancellationTokenSource(); directCancellation
 try { await workflow.Execute(new("CAB-105", 2), directCancellation.Token); throw new Exception("Direct cancellation ignored"); }
 catch (OperationCanceledException) { Check(directGateway.LastToken == directCancellation.Token, "Direct workflow forwards cancellation"); }
 
+foreach (var (sku, quantity, expected, name) in new[]
+{
+    ("CAB-105", 4, 30m, "No offer at campaign boundary"),
+    ("BRG-204", 10, 108m, "Wholesale only"),
+    ("CAB-105", 5, 31.88m, "Campaign only"),
+    ("CAB-105", 10, 63.75m, "Both eligible: larger rate wins")
+})
+{
+    var offerStore = new OrderStore();
+    var offerGateway = new RecordingGateway();
+    var offerWorkflow = new PlaceOrder(catalog, pricing, offerStore, offerGateway);
+    var result = (OrderPlaced)await offerWorkflow.Execute(new(sku, quantity), default);
+    Check(result.Order.Total == expected, $"Offer selection: {name} = {expected}");
+    Check(offerStore.Find(result.Order.Id)?.Total == expected
+        && offerGateway.LastAmount == expected && offerGateway.Calls == 1,
+        $"Captured and authorized once: {name}");
+}
+
 Console.WriteLine($"Verified {passed} checks.");
 
 sealed class RecordingGateway : IPaymentGateway
@@ -109,4 +127,3 @@ sealed class RecordingGateway : IPaymentGateway
 }
 sealed class FixtureHttpFactory(HttpClient client) : IHttpClientFactory
 { public HttpClient CreateClient(string name) => client; }
-
