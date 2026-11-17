@@ -41,6 +41,10 @@
     {
       "key": "m03BeforeAttemptIds",
       "value": ""
+    },
+    {
+      "key": "m03ReceiptFailure",
+      "value": "false"
     }
   ],
   "item": [
@@ -1522,6 +1526,372 @@
                         "type": "text/javascript",
                         "exec": [
                           "pm.test(\"Filter length is bounded\", () => pm.response.to.have.status(400));"
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Lesson 02 - One Order Two Local Reactions",
+          "description": "Run one scenario folder at a time after configuring and restarting the API. Approve/SUCCESS remains the in-process provider. Receipt failure demo: Development only, OrderPreviews__FailReceipt=true. No email/shipment, retry, durable bus or exactly-once claim. Use the same requests against the supplied direct-call comparison and completed observer code.",
+          "item": [
+            {
+              "name": "01 - Confirmed - two previews - Approve and FailReceipt=false",
+              "item": [
+                {
+                  "name": "Checkout - 201 - original total 63.75",
+                  "request": {
+                    "method": "POST",
+                    "url": "{{baseUrl}}/orders",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"sku\": \"CAB-105\",\n  \"quantity\": 10\n}"
+                    }
+                  },
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test(\"Original checkout outcome survives previews\", () => { pm.response.to.have.status(201); pm.expect(pm.response.json().total).to.eql(63.75); pm.expect(pm.response.json().status).to.eql(\"Confirmed\"); });",
+                          "const order = pm.response.json(); pm.collectionVariables.set(\"m03OrderId\", order.id); pm.collectionVariables.set(\"m03OperationKey\", order.operationKey);",
+                          "pm.collectionVariables.set(\"m03ReceiptFailure\", \"false\");",
+                          "pm.collectionVariables.set(\"m03OrderStatus\", \"Confirmed\"); pm.collectionVariables.set(\"m03Decision\", \"Approved\");"
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "Read authoritative order - unchanged",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/orders/{{m03OrderId}}"
+                  },
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test(\"Authoritative state is independent of previews\", () => { pm.response.to.have.status(200); const order = pm.response.json(); pm.expect(order.status).to.eql(pm.collectionVariables.get(\"m03OrderStatus\")); pm.expect(order.total).to.eql(63.75); });"
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "Read local receipt and fulfillment previews",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/orders/{{m03OrderId}}/previews"
+                  },
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test(\"One confirmed order produces local previews or visible partial failure\", () => { pm.response.to.have.status(200); const view = pm.response.json(); const id = pm.collectionVariables.get(\"m03OrderId\"); pm.expect(view.orderId).to.eql(id); pm.expect(view.fulfillment).to.eql({orderId:id, sku:\"CAB-105\", quantity:10}); if (pm.collectionVariables.get(\"m03ReceiptFailure\") === \"true\") { pm.expect(view.receipt).to.eql(null); pm.expect(view.failedReactions).to.eql([\"ReceiptPreviewReaction\"]); } else { pm.expect(view.receipt).to.eql({orderId:id, total:63.75, currency:\"USD\"}); pm.expect(view.failedReactions).to.eql([]); } });"
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "Payment remains one application attempt for 63.75",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/diagnostics/payment-attempts?operationKey={{m03OperationKey}}"
+                  },
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test(\"Preview processing does not authorize again\", () => { pm.response.to.have.status(200); const attempts = pm.response.json(); pm.expect(attempts.length).to.eql(1); pm.expect(attempts[0].amount).to.eql(63.75); pm.expect(attempts[0].decision).to.eql(pm.collectionVariables.get(\"m03Decision\")); });"
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "02 - Partial failure - Approve and FailReceipt=true",
+              "item": [
+                {
+                  "name": "Checkout - 201 - original total 63.75",
+                  "request": {
+                    "method": "POST",
+                    "url": "{{baseUrl}}/orders",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"sku\": \"CAB-105\",\n  \"quantity\": 10\n}"
+                    }
+                  },
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test(\"Original checkout outcome survives previews\", () => { pm.response.to.have.status(201); pm.expect(pm.response.json().total).to.eql(63.75); pm.expect(pm.response.json().status).to.eql(\"Confirmed\"); });",
+                          "const order = pm.response.json(); pm.collectionVariables.set(\"m03OrderId\", order.id); pm.collectionVariables.set(\"m03OperationKey\", order.operationKey);",
+                          "pm.collectionVariables.set(\"m03ReceiptFailure\", \"true\");",
+                          "pm.collectionVariables.set(\"m03OrderStatus\", \"Confirmed\"); pm.collectionVariables.set(\"m03Decision\", \"Approved\");"
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "Read authoritative order - unchanged",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/orders/{{m03OrderId}}"
+                  },
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test(\"Authoritative state is independent of previews\", () => { pm.response.to.have.status(200); const order = pm.response.json(); pm.expect(order.status).to.eql(pm.collectionVariables.get(\"m03OrderStatus\")); pm.expect(order.total).to.eql(63.75); });"
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "Read local receipt and fulfillment previews",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/orders/{{m03OrderId}}/previews"
+                  },
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test(\"One confirmed order produces local previews or visible partial failure\", () => { pm.response.to.have.status(200); const view = pm.response.json(); const id = pm.collectionVariables.get(\"m03OrderId\"); pm.expect(view.orderId).to.eql(id); pm.expect(view.fulfillment).to.eql({orderId:id, sku:\"CAB-105\", quantity:10}); if (pm.collectionVariables.get(\"m03ReceiptFailure\") === \"true\") { pm.expect(view.receipt).to.eql(null); pm.expect(view.failedReactions).to.eql([\"ReceiptPreviewReaction\"]); } else { pm.expect(view.receipt).to.eql({orderId:id, total:63.75, currency:\"USD\"}); pm.expect(view.failedReactions).to.eql([]); } });"
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "Payment remains one application attempt for 63.75",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/diagnostics/payment-attempts?operationKey={{m03OperationKey}}"
+                  },
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test(\"Preview processing does not authorize again\", () => { pm.response.to.have.status(200); const attempts = pm.response.json(); pm.expect(attempts.length).to.eql(1); pm.expect(attempts[0].amount).to.eql(63.75); pm.expect(attempts[0].decision).to.eql(pm.collectionVariables.get(\"m03Decision\")); });"
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "03 - Decline - restart with Scenario=Decline",
+              "item": [
+                {
+                  "name": "Checkout - 409 - original total 63.75",
+                  "request": {
+                    "method": "POST",
+                    "url": "{{baseUrl}}/orders",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"sku\": \"CAB-105\",\n  \"quantity\": 10\n}"
+                    }
+                  },
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test(\"Original checkout outcome survives previews\", () => { pm.response.to.have.status(409); pm.expect(pm.response.json().total).to.eql(63.75); pm.expect(pm.response.json().status).to.eql(\"Declined\"); });",
+                          "const order = pm.response.json(); pm.collectionVariables.set(\"m03OrderId\", order.id); pm.collectionVariables.set(\"m03OperationKey\", order.operationKey);",
+                          "pm.collectionVariables.set(\"m03ReceiptFailure\", \"false\");",
+                          "pm.collectionVariables.set(\"m03OrderStatus\", \"Declined\"); pm.collectionVariables.set(\"m03Decision\", \"Declined\");"
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "Read authoritative order - unchanged",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/orders/{{m03OrderId}}"
+                  },
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test(\"Authoritative state is independent of previews\", () => { pm.response.to.have.status(200); const order = pm.response.json(); pm.expect(order.status).to.eql(pm.collectionVariables.get(\"m03OrderStatus\")); pm.expect(order.total).to.eql(63.75); });"
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "No confirmed-order previews",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/orders/{{m03OrderId}}/previews"
+                  },
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test(\"Declined or indeterminate orders cause no confirmed-order reaction\", () => pm.response.to.have.status(404));"
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "Payment remains one application attempt for 63.75",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/diagnostics/payment-attempts?operationKey={{m03OperationKey}}"
+                  },
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test(\"Preview processing does not authorize again\", () => { pm.response.to.have.status(200); const attempts = pm.response.json(); pm.expect(attempts.length).to.eql(1); pm.expect(attempts[0].amount).to.eql(63.75); pm.expect(attempts[0].decision).to.eql(pm.collectionVariables.get(\"m03Decision\")); });"
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "04 - Unknown - restart with Scenario=AuthorizeThenDisconnect",
+              "item": [
+                {
+                  "name": "Checkout - 202 - original total 63.75",
+                  "request": {
+                    "method": "POST",
+                    "url": "{{baseUrl}}/orders",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"sku\": \"CAB-105\",\n  \"quantity\": 10\n}"
+                    }
+                  },
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test(\"Original checkout outcome survives previews\", () => { pm.response.to.have.status(202); pm.expect(pm.response.json().total).to.eql(63.75); pm.expect(pm.response.json().status).to.eql(\"PendingReconciliation\"); });",
+                          "const order = pm.response.json(); pm.collectionVariables.set(\"m03OrderId\", order.id); pm.collectionVariables.set(\"m03OperationKey\", order.operationKey);",
+                          "pm.collectionVariables.set(\"m03ReceiptFailure\", \"false\");",
+                          "pm.collectionVariables.set(\"m03OrderStatus\", \"PendingReconciliation\"); pm.collectionVariables.set(\"m03Decision\", \"Unknown\");"
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "Read authoritative order - unchanged",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/orders/{{m03OrderId}}"
+                  },
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test(\"Authoritative state is independent of previews\", () => { pm.response.to.have.status(200); const order = pm.response.json(); pm.expect(order.status).to.eql(pm.collectionVariables.get(\"m03OrderStatus\")); pm.expect(order.total).to.eql(63.75); });"
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "No confirmed-order previews",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/orders/{{m03OrderId}}/previews"
+                  },
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test(\"Declined or indeterminate orders cause no confirmed-order reaction\", () => pm.response.to.have.status(404));"
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "Payment remains one application attempt for 63.75",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/diagnostics/payment-attempts?operationKey={{m03OperationKey}}"
+                  },
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test(\"Preview processing does not authorize again\", () => { pm.response.to.have.status(200); const attempts = pm.response.json(); pm.expect(attempts.length).to.eql(1); pm.expect(attempts[0].amount).to.eql(63.75); pm.expect(attempts[0].decision).to.eql(pm.collectionVariables.get(\"m03Decision\")); });"
                         ]
                       }
                     }

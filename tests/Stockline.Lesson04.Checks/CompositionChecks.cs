@@ -8,6 +8,7 @@ internal static class CompositionChecks
     {
         var services = new ServiceCollection();
         services.AddSingleton<IConfiguration>(new ConfigurationBuilder().Build());
+        services.AddSingleton<Microsoft.Extensions.Hosting.IHostEnvironment>(new CheckHostEnvironment());
         services.AddStocklineCheckout();
         await using var provider = services.BuildServiceProvider(new ServiceProviderOptions
         {
@@ -37,6 +38,14 @@ internal static class CompositionChecks
             != second.ServiceProvider.GetRequiredService<PaymentAdapter>(),
             "The concrete inner adapter remains scoped");
 
+        var reactions = first.ServiceProvider.GetServices<IOrderConfirmedReaction>().ToArray();
+        check(reactions.Length == 2 && reactions[0] is ReceiptPreviewReaction && reactions[1] is FulfillmentPreviewReaction
+            && ReferenceEquals(reactions[0], second.ServiceProvider.GetServices<IOrderConfirmedReaction>().First()),
+            "Two local singleton subscribers resolve in explicit receipt-then-fulfillment order");
+        check(ReferenceEquals(first.ServiceProvider.GetRequiredService<LocalOrderConfirmedPublisher>(),
+            second.ServiceProvider.GetRequiredService<LocalOrderConfirmedPublisher>()),
+            "The local publisher has no captive request-scoped dependencies");
+
         var result = (OrderPlaced)await firstWorkflow.Execute(new("CAB-105", 10), default);
         check(result.Order.Total == 63.75m && result.Order.Status == "Confirmed",
             "The production graph resolves and authorizes the selected offer");
@@ -46,6 +55,11 @@ internal static class CompositionChecks
             && sink.Snapshot()[0].Decision == PaymentDecision.Approved
             && sink.Snapshot()[0].Amount == result.Order.Total,
             "The production graph records one application attempt without changing its result");
+
+        var preview = first.ServiceProvider.GetRequiredService<LocalOrderPreviewStore>().Find(result.Order.Id);
+        check(preview?.Receipt?.Total == result.Order.Total && preview.Fulfillment?.Quantity == 10
+            && preview.FailedReactions.Length == 0,
+            "The production graph creates both previews after confirmation without another authorization");
 
         var substitute = new RecordingGateway();
         services.RemoveAll<IPaymentGateway>();
@@ -81,4 +95,13 @@ internal static class CompositionChecks
     {
         public ScopedValue Value { get; } = value;
     }
+}
+
+internal sealed class CheckHostEnvironment : Microsoft.Extensions.Hosting.IHostEnvironment
+{
+    public string EnvironmentName { get; set; } = "Development";
+    public string ApplicationName { get; set; } = "Stockline.Checks";
+    public string ContentRootPath { get; set; } = "";
+    public Microsoft.Extensions.FileProviders.IFileProvider ContentRootFileProvider { get; set; }
+        = new Microsoft.Extensions.FileProviders.NullFileProvider();
 }

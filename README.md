@@ -1,103 +1,93 @@
-# Stockline Orders — Module 3 Lesson 01: Attempt Diagnostics
+# Stockline Orders — Module 3 Lesson 02: One Order, Two Local Reactions
 
-Start: Module 2 Lesson 4 completed code, pinned here at `f80c500e194e4c01898992155525aaa6e88f0ead`.
-Local completed branch: `module-03-lesson-01-complete`. This completed checkpoint is local; it has not been pushed or published.
+Start from local `module-03-lesson-01-complete`, commit `a7e419ee224cf3fbc072694bff489f04e5d974de`. Current local implementation branch: `module-03-lesson-02-complete`. No push or published new branch is assumed.
 
-Prerequisites: .NET 10 SDK, Git, a C# editor and Postman. Keep the existing one-project application and local payment simulator.
+The preceding lesson's learner scaffold is `module-03-lesson-01-start` (`e772aebd2be8560f3241651150e297e938172230`): full working L4 plus the three supplied Diagnostics support files, with 62 baseline checks. L01 completed code has 37 diagnostic / 104 cumulative checks. Its decorator records the exact original decimal amount, including 63.75 in the normal CAB checkout.
 
-## The change
+## Why add these reactions?
 
-Support needs to inspect what each application authorization invocation returned, including indeterminate outcomes. The call chain is:
+After confirmation, the local teaching application can show a receipt preview and a fulfillment-preview projection. These are optional projections of the saved order; they do not send email, reserve inventory or create shipments.
 
-`PlaceOrder -> DiagnosticPaymentGateway -> PaymentAdapter -> SimulatedProvider`
+Start with two concrete calls after `OrderStore.Complete`. That working direct-call intermediate is retained as the separately supplied `source/direct` comparison snapshot. It actually builds and has 9 focused / 113 cumulative checks plus real local HTTP receipts. It is not claimed to be part of a bare repository clone or a recorded film. The same Lesson 02 Postman requests work against its API and the completed observer implementation.
 
-The decorator forwards the original operation key, captured amount and cancellation token exactly once. It returns the original decision or rethrows the original exception. Cancellation is forwarded, not used as a reason to invent a result or roll back provider effects. Even an already-canceled token reaches the inner gateway; if that gateway returns a result, the decorator preserves it.
+Direct calls are reasonable for two stable reactions. The observer comparison moves knowledge of the subscriber list to composition when adding/removing local reactions independently is useful. It adds one domain-specific callback interface and one concrete publisher; there is no generic bus, mediator, async dispatch framework or background worker.
 
-The adapter still translates provider replies and converts transport failure to `Unknown`. A simulated lost reply therefore records `Returned / Unknown`, not a decorator fault. Existing HTTP mapping is unchanged: approval 201/Confirmed, decline 409/Declined, unknown 202/PendingReconciliation. CAB-105 quantity 10 still captures and authorizes 63.75; the diagnostic observation records that same original decimal amount. This observes the gateway input, not independent proof of an external charge.
+## Exact order and failure policy
 
-## Build and checks
+1. Validate the request and calculate the server-owned total.
+2. Start the order and invoke the existing decorated payment gateway once.
+3. Save the original payment decision with `OrderStore.Complete`.
+4. Only for a saved `Confirmed` order, construct immutable `OrderConfirmed` data from its captured values.
+5. Invoke each registered callback synchronously and sequentially: receipt, then fulfillment.
+6. Catch an individual subscriber exception, retain its type name as best-effort preview-failure visibility, and continue to the next subscriber. Return the original saved order.
 
-Save unfinished edits before changing branches. Start your own practice branch from `f80c500`; compare against the local completed branch only after implementing your change. Historical Module 2 checkpoints are listed below. No new remote branch is assumed to exist.
+A failed receipt preview therefore leaves the confirmed order and 201 response intact, while the fulfillment preview still runs. A failed second subscriber does not undo the first. A callback throwing `OperationCanceledException` is a callback failure, not a new promise to cancel or roll back checkout. The callback contract has no cancellation token. Original gateway exceptions and caller cancellation still propagate before confirmation and cause no reactions; a cancellation race cannot replace an already-returned approval.
+
+Declined and Unknown decisions retain their existing 409/Declined and 202/PendingReconciliation behavior, without invoking either confirmed-order subscriber. No retry, deduplication, financial audit or reconciliation mechanism is added. Unknown still means indeterminate.
+
+A successful invocation attempts each registered subscriber once. Publishing again calls it again. A process failure after confirmation can lose all or some callbacks; restart loses all previews and orders. No durable publication record or eventual-delivery guarantee exists. Callbacks must remain fast and local, because they run on the request path.
+
+## Files and lifetimes
+
+- `Application/OrderConfirmed.cs`: immutable saved-order data.
+- `Application/IOrderConfirmedReaction.cs` and `LocalOrderConfirmedPublisher.cs`: explicit sequential callback contract and failure policy.
+- `Previews/OrderPreviewReactions.cs`: receipt and fulfillment implementations.
+- `Previews/LocalOrderPreviewStore.cs`: process-local projections, retaining at most 100 orders; at most eight distinct failure type names of 128 characters per order. Eviction uses first-observed order, not completion time. Read arrays are detached.
+- `Application/PlaceOrder.cs`: save completion first, publish only for Confirmed.
+- `CheckoutRegistration.cs`: singleton publisher, store and stateless subscribers; original scoped workflow, decorator and adapter remain scoped. No singleton captures request-scoped dependencies.
+- `Controllers/OrderPreviewsController.cs`: Development-only read view.
+
+Paths above are under `src/Stockline.Api`. The direct-call intermediate has concrete receipt/fulfillment dependencies instead of the observer interface and publisher.
+
+## Run checks and API
+
+Prerequisites remain .NET 10 SDK, Git, C# editor and Postman. Save your work and start your own practice branch from the L01 completed checkpoint before editing; compare completed code after your attempt.
 
 ```powershell
 git status
-git switch -c my-module-03-lesson-01 f80c500
-```
-
-For the completed implementation, run from the repository root:
-
-```powershell
+git switch -c my-module-03-lesson-02 module-03-lesson-01-complete
 dotnet build Stockline.Orders.slnx
-dotnet run --project tests/Stockline.Lesson04.Checks -- --diagnostics-only
+dotnet run --project tests/Stockline.Lesson04.Checks -- --previews-only
 dotnet run --project tests/Stockline.Lesson04.Checks
 dotnet run --project src/Stockline.Api
 ```
 
-Expected completed counts: **37 diagnostic checks**, **104 cumulative checks**. The cumulative runner retains its historical folder name. The solution now includes that runner, so a solution build also compiles the current verification code. The starting L4 checkpoint has 62 cumulative checks.
+Build along before expecting the new checks. Completed observer counts: **30 preview checks**, **137 cumulative checks**; the existing 37 diagnostic checks remain available with `--diagnostics-only`. The cumulative check project deliberately retains `tests/Stockline.Lesson04.Checks` for historical compatibility with earlier checkpoints and lesson commands; it now verifies the evolving course application. Renaming it across the course is outside this lesson. Run API and checks in separate terminals. The normal profile uses Development and `http://localhost:7375`.
 
-The first three commands are verification; the final command starts the API. Keep the check runner separate from API startup. `dotnet run` does not watch edits: stop and restart after saving code changes. Use the same API process between each POST, order GET and diagnostic GET.
+## Postman and partial-failure rehearsal
 
-## Inspect in Postman
+Reimport the existing `postman/Stockline Orders.postman_collection.json`; do not create a duplicate collection. Open Module 03 -> Lesson 02. Run one scenario folder at a time. The historical lesson examples remain checkpoint-specific.
 
-Reimport the existing `postman/Stockline Orders.postman_collection.json`; retain one collection. Open **Module 03 -> Lesson 01**. The historical Module 1/2 folders retain their checkpoint-specific examples.
-
-The normal launch profile uses Development and `http://localhost:7375`. Send CAB-105 quantity 10 in the approval folder, then read the returned order and its authorization attempt. The requests save `m03OrderId` and `m03OperationKey` for you.
+With Approve / SUCCESS and no failure override, POST CAB-105 quantity 10, then read the saved order, previews and payment attempt in the SAME running process. Expected: 201/Confirmed, saved total 63.75, one receipt preview for 63.75, one fulfillment preview for CAB-105 quantity 10 and one diagnostic attempt for 63.75.
 
 ```http
-GET /diagnostics/payment-attempts
-GET /diagnostics/payment-attempts?operationKey=authorize:ORD-1048
+GET /orders/{returned-order-id}/previews
+GET /diagnostics/payment-attempts?operationKey={returned-operation-key}
 ```
 
-The operation key above is illustrative: use the value returned by your own POST. Reads return a JSON array in recording order. No matches return `[]`; a filter longer than 128 characters returns 400. Reading never calls the gateway or clears the sink. Run the invalid-input folder's three requests in order while no other client is creating orders: retained attempt IDs must stay unchanged after a rejected SKU.
+The preview view returns 404 for an absent/evicted preview, including declined/unknown orders, and outside Development. GET never dispatches callbacks. Failure names indicate observed local callback failure, not a durable audit; old names can remain until eviction if a notification is manually replayed.
 
-The decline and lost-reply folders are separate manual scenarios, not one automatic collection run. Stop the API before each environment change:
+For the deliberate partial-failure fixture, stop the API, then run:
 
 ```powershell
-$env:PaymentProvider__Scenario = 'Decline'
+$env:OrderPreviews__FailReceipt = 'true'
+$env:PaymentProvider__Scenario = 'Approve'
 dotnet run --project src/Stockline.Api
 ```
 
-After stopping it, use `AuthorizeThenDisconnect` for the lost-reply folder. Restore `Approve` afterward. The existing `PaymentProvider:ApprovedReply` is `SUCCESS`; the handler remains entirely in-process. Restart clears orders and diagnostics, so POST again before reading the returned identifiers. No new provider, scenario-control endpoint or retry is introduced.
+The failure flag is honored only in Development and throws BEFORE generating the receipt preview, AFTER confirmation has already been saved. Send a fresh POST: it still returns 201 and the order GET returns Confirmed/63.75. The preview view shows `receipt: null`, a populated fulfillment projection and `failedReactions: ["ReceiptPreviewReaction"]`. Payment diagnostics still contain one original attempt. Do not retry payment to repair a preview.
 
-The read controller returns 404 outside Development. To rehearse that boundary without the launch profile overriding your environment, stop the API and run:
+Stop the API before changing scenarios. Set the failure flag to `false`; repeat with `PaymentProvider__Scenario` equal to `Decline`, then `AuthorizeThenDisconnect`. These keep 409 and 202 respectively; order GET works but preview GET returns 404. Restore `Approve` and remove the failure override afterward. These are local handler scenarios, not real provider calls.
 
-```powershell
-$env:ASPNETCORE_ENVIRONMENT = 'Production'
-$env:DOTNET_ENVIRONMENT = 'Production'
-$env:ASPNETCORE_URLS = 'http://localhost:7375'
-dotnet run --no-launch-profile --project src/Stockline.Api
-```
-
-Afterward, stop it and remove those three environment overrides before returning to the ordinary launch command. This unauthenticated local teaching view is not a production support interface.
-
-## Retention and failure semantics
-
-`LocalPaymentAttemptSink` keeps at most **100 observations**, evicting the oldest recorded entry. Operation keys and exception-type strings are limited to 128 characters in retained records; original gateway arguments are unchanged. A lock protects recording, eviction and detached snapshot reads. Recording order can differ from invocation or completion-timestamp order under concurrency.
-
-Each observation has a fresh attempt ID, operation key, original decimal amount, UTC completion timestamp, termination (`Returned`, `Canceled`, `Faulted`), optional decision and optional exception type. Reusing an operation key does not deduplicate invocations. No exception messages, stack traces, provider bodies, payment credentials or HTTP timing are retained.
-
-This is non-durable process-local diagnostics. Sink failure, eviction or process termination can lose observations. A cancellation observation establishes that cancellation was thrown, not that an authorization was undone. These entries are not a financial audit trail, provider transaction history, retry policy or exactly-once guarantee. Built-in HTTP tracing remains responsible for transport diagnostics.
+To verify reads are hidden outside Development, set BOTH `ASPNETCORE_ENVIRONMENT` and `DOTNET_ENVIRONMENT` to `Production`, set the loopback `ASPNETCORE_URLS`, and use `dotnet run --no-launch-profile --project src/Stockline.Api`. The launch profile otherwise selects Development. Remove those overrides afterward. No authenticated production support endpoint is claimed.
 
 ## Teaching edit sequence
 
-1. Start from the working L4 checkout: POST/GET 63.75 and run its existing checks. Explain the missing application-attempt view and compare adding diagnostics inside the adapter.
-2. Add the small immutable observation and sink contract. Implement bounded local retention, showing why a singleton is needed across POST and diagnostic GET requests.
-3. Write focused forwarding/result/error/cancellation checks; add the decorator around an inner `IPaymentGateway`. Keep one call and rethrow original failures.
-4. Show a failing sink and prove that best-effort recording cannot mask the inner outcome. Explain why recording exceptions are isolated from the business call.
-5. Wire the concrete scoped adapter inside the scoped decorator. Update the composition assertion intentionally; retain lifetime validation and gateway substitution checks. Run the wrapped gateway contract.
-6. Add the Development-only read controller and Postman requests. Demonstrate Approved, Declined and Unknown with unchanged checkout responses, then invalid input adding no attempt.
-7. Run focused and cumulative checks. Explain eviction/restart loss, and leave the adapter, workflow and result mapping unchanged.
+1. Start with the verified L01 checkout and its recorded original payment amount. Explain the two optional previews and their independence from authoritative confirmation.
+2. Implement the concrete preview types and direct receipt/fulfillment callers after saved confirmation. Run the direct-call comparison and Postman proof, including no reactions for decline/unknown.
+3. Deliberately fail the receipt preview after confirmation. Keep the order confirmed, continue fulfillment and inspect partial results. State the failure policy before abstracting it.
+4. Introduce the single local callback interface and sequential publisher. Move subscriber registration into composition, replacing the concrete preview dependencies in PlaceOrder. Compare actual direct source with completed observer source.
+5. Run the same HTTP cases and focused checks. Inject failures at both subscriber positions, cancellation from a subscriber and original gateway failure/cancellation. Demonstrate repeated publication has no deduplication.
+6. Explain the added navigation/indirection cost and local-loss window. Keep durable delivery for the later messaging module.
 
-Exercise: use a capacity-three sink fixture, make four distinguishable attempts and explain the retained order. Then demonstrate that two invocations with the same operation key remain distinct observations. Keep local order-confirmed reactions for M03L02; no subscribers or event dispatcher belong in this lesson.
-
-## Module 2 checkpoints
-
-| Video | Start from | Compare after finishing |
-|---|---|---|
-| 1. What Happens When Discounts Overlap | [`module-02-start`](https://github.com/amustafa91/stockline-orders-starter/tree/module-02-start) | [`module-02-lesson-01-complete`](https://github.com/amustafa91/stockline-orders-starter/tree/module-02-lesson-01-complete) |
-| 2. When Does a Pricing Policy Earn Its Interface | [`module-02-lesson-01-complete`](https://github.com/amustafa91/stockline-orders-starter/tree/module-02-lesson-01-complete) | [`module-02-lesson-02-complete`](https://github.com/amustafa91/stockline-orders-starter/tree/module-02-lesson-02-complete) |
-| 3. A Substitute Must Keep the Promise | [`module-02-lesson-02-complete`](https://github.com/amustafa91/stockline-orders-starter/tree/module-02-lesson-02-complete) | [`module-02-lesson-03-complete`](https://github.com/amustafa91/stockline-orders-starter/tree/module-02-lesson-03-complete) |
-| 4. Dependency Direction Is More Than DI Registration | [`module-02-lesson-03-complete`](https://github.com/amustafa91/stockline-orders-starter/tree/module-02-lesson-03-complete) | [`module-02-lesson-04-complete`](https://github.com/amustafa91/stockline-orders-starter/tree/module-02-lesson-04-complete) |
-| Recap â€” What Can Change | [`module-02-lesson-04-complete`](https://github.com/amustafa91/stockline-orders-starter/tree/module-02-lesson-04-complete) | Same checkpoint; use a practice branch for the exercise |
-
-`main` starts Module 1. For Module 2, finish Module 1 first, then use `module-02-start`. Each completed branch is the next lesson's starting code. The recap uses the Lesson 4 completion. Use these public GitHub branches as the course checkpoints; the optional exercises are yours to implement.
+Exercise: in an isolated test, add a third local subscriber, prove its invocation order and inject failure in the middle subscriber. The later subscriber must still run; the saved order must remain unchanged. Do not add retries, queues or network effects.

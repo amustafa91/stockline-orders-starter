@@ -1,6 +1,7 @@
 public sealed class PlaceOrder(
     ProductCatalog catalog, OrderPricing pricing,
-    OrderStore store, IPaymentGateway payments)
+    OrderStore store, IPaymentGateway payments,
+    LocalOrderConfirmedPublisher confirmed)
 {
     public async Task<PlaceOrderResult> Execute(
         PlaceOrderCommand command, CancellationToken cancellationToken)
@@ -17,6 +18,12 @@ public sealed class PlaceOrder(
         var order = store.Start(product, command.Quantity, total);
         var decision = await payments.AuthorizeAsync(
             order.OperationKey, order.Total, cancellationToken);
-        return new OrderPlaced(store.Complete(order, decision));
+        var completed = store.Complete(order, decision);
+        if (completed.Status == "Confirmed")
+        {
+            var notification = new OrderConfirmed(completed.Id, completed.Sku, completed.Quantity, completed.Total, completed.Currency);
+            confirmed.Publish(notification);
+        }
+        return new OrderPlaced(completed);
     }
 }

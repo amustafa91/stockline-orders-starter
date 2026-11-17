@@ -14,6 +14,13 @@ public static class CheckoutRegistration
         services.AddSingleton<IDiscountPolicy, WholesaleDiscount>();
         services.AddSingleton<IDiscountPolicy, CableCampaign>();
         services.AddSingleton<OrderPricing>();
+        services.AddSingleton<LocalOrderPreviewStore>();
+        services.AddSingleton<IOrderConfirmedReaction>(services => new ReceiptPreviewReaction(
+            services.GetRequiredService<LocalOrderPreviewStore>(),
+            services.GetRequiredService<IHostEnvironment>().IsDevelopment()
+                && services.GetRequiredService<IConfiguration>().GetValue<bool>("OrderPreviews:FailReceipt")));
+        services.AddSingleton<IOrderConfirmedReaction, FulfillmentPreviewReaction>();
+        services.AddSingleton<LocalOrderConfirmedPublisher>();
         services.AddScoped<PlaceOrder>();
         services.AddSingleton<SimulatedProvider>();
         // This handler simulates a provider locally; the .test address never reaches a payment service.
