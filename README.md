@@ -1,9 +1,36 @@
 # Stockline Orders — Module 3 Lesson 01: Attempt Diagnostics
 
-Start: Module 2 Lesson 4 completed code, pinned here at `f80c500e194e4c01898992155525aaa6e88f0ead`.
-Local completed branch: `module-03-lesson-01-complete`. This completed checkpoint is local; it has not been pushed or published.
+Starting checkpoint: [`module-03-lesson-01-start`](https://github.com/amustafa91/stockline-orders-starter/tree/module-03-lesson-01-start). Completed comparison: [`module-03-lesson-01-complete`](https://github.com/amustafa91/stockline-orders-starter/tree/module-03-lesson-01-complete).
 
-Prerequisites: .NET 10 SDK, Git, a C# editor and Postman. Keep the existing one-project application and local payment simulator.
+The starting checkpoint supplies PaymentAttempt, IPaymentAttemptSink and LocalPaymentAttemptSink as inactive support scaffold on the working Module 2 Lesson 4 application (base `f80c500`). Inspect those types when introduced; implement the decorator, DI wiring and Development-only read controller during the lesson.
+
+## Get the code and choose your checkpoint
+
+Prerequisites: .NET 10 SDK, Git, a C# editor and Postman. Git tracks your local work; GitHub hosts the public repository. You do not need a GitHub account to clone it.
+
+Clone once, then work from the repository root:
+
+```powershell
+git clone https://github.com/amustafa91/stockline-orders-starter.git
+cd stockline-orders-starter
+```
+
+A normal clone begins on `main`, the Module 1 starter. Module 3 continues the completed Module 2 application; choose its lesson checkpoint explicitly.
+
+| Lesson | Start from | Compare after your attempt |
+|---|---|---|
+| M03L01 — Attempt Diagnostics | [`module-03-lesson-01-start`](https://github.com/amustafa91/stockline-orders-starter/tree/module-03-lesson-01-start) | [`module-03-lesson-01-complete`](https://github.com/amustafa91/stockline-orders-starter/tree/module-03-lesson-01-complete) |
+| M03L02 — One Order, Two Local Reactions | [`module-03-lesson-01-complete`](https://github.com/amustafa91/stockline-orders-starter/tree/module-03-lesson-01-complete) | [`module-03-lesson-02-complete`](https://github.com/amustafa91/stockline-orders-starter/tree/module-03-lesson-02-complete) |
+
+For an existing clone, save your files and commit or stash unfinished work, including untracked files, before changing branches. Check `git status`, fetch the checkpoint refs, then create your own practice branch from the remote lesson start:
+
+```powershell
+git status
+git fetch origin
+git switch -c my-module-03-lesson-01 origin/module-03-lesson-01-start
+```
+
+Choose a fresh practice-branch name if that name already exists. Keep your own edited application checked out while testing it; use the completed branch for comparison after your attempt. The unmodified starting checkpoint and the completed checkpoint have different expected checks.
 
 ## The change
 
@@ -17,13 +44,6 @@ The adapter still translates provider replies and converts transport failure to 
 
 ## Build and checks
 
-Save unfinished edits before changing branches. Start your own practice branch from `f80c500`; compare against the local completed branch only after implementing your change. Historical Module 2 checkpoints are listed below. No new remote branch is assumed to exist.
-
-```powershell
-git status
-git switch -c my-module-03-lesson-01 f80c500
-```
-
 For the completed implementation, run from the repository root:
 
 ```powershell
@@ -33,7 +53,7 @@ dotnet run --project tests/Stockline.Lesson04.Checks
 dotnet run --project src/Stockline.Api
 ```
 
-Expected completed counts: **37 diagnostic checks**, **104 cumulative checks**. The cumulative runner retains its historical folder name. The solution now includes that runner, so a solution build also compiles the current verification code. The starting L4 checkpoint has 62 cumulative checks.
+Expected completed counts: **37 diagnostic checks**, **104 cumulative checks**. The cumulative check project retains `tests/Stockline.Lesson04.Checks` for historical compatibility with earlier checkpoints and lesson commands. The solution now includes that runner, so a solution build also compiles the current verification code. The support-scaffold starting checkpoint has 62 cumulative checks.
 
 The first three commands are verification; the final command starts the API. Keep the check runner separate from API startup. `dotnet run` does not watch edits: stop and restart after saving code changes. Use the same API process between each POST, order GET and diagnostic GET.
 
@@ -80,8 +100,8 @@ This is non-durable process-local diagnostics. Sink failure, eviction or process
 
 ## Teaching edit sequence
 
-1. Start from the working L4 checkout: POST/GET 63.75 and run its existing checks. Explain the missing application-attempt view and compare adding diagnostics inside the adapter.
-2. Add the small immutable observation and sink contract. Implement bounded local retention, showing why a singleton is needed across POST and diagnostic GET requests.
+1. Start from the supplied support-scaffold checkout: POST/GET 63.75 and run its existing checks. Explain the missing application-attempt view and compare adding diagnostics inside the adapter.
+2. Inspect the supplied immutable observation, sink contract and bounded local retention. Explain why one singleton sink is needed across POST and diagnostic GET requests; do not present these supplied types as on-screen edits.
 3. Write focused forwarding/result/error/cancellation checks; add the decorator around an inner `IPaymentGateway`. Keep one call and rethrow original failures.
 4. Show a failing sink and prove that best-effort recording cannot mask the inner outcome. Explain why recording exceptions are isolated from the business call.
 5. Wire the concrete scoped adapter inside the scoped decorator. Update the composition assertion intentionally; retain lifetime validation and gateway substitution checks. Run the wrapped gateway contract.
@@ -98,6 +118,6 @@ Exercise: use a capacity-three sink fixture, make four distinguishable attempts 
 | 2. When Does a Pricing Policy Earn Its Interface | [`module-02-lesson-01-complete`](https://github.com/amustafa91/stockline-orders-starter/tree/module-02-lesson-01-complete) | [`module-02-lesson-02-complete`](https://github.com/amustafa91/stockline-orders-starter/tree/module-02-lesson-02-complete) |
 | 3. A Substitute Must Keep the Promise | [`module-02-lesson-02-complete`](https://github.com/amustafa91/stockline-orders-starter/tree/module-02-lesson-02-complete) | [`module-02-lesson-03-complete`](https://github.com/amustafa91/stockline-orders-starter/tree/module-02-lesson-03-complete) |
 | 4. Dependency Direction Is More Than DI Registration | [`module-02-lesson-03-complete`](https://github.com/amustafa91/stockline-orders-starter/tree/module-02-lesson-03-complete) | [`module-02-lesson-04-complete`](https://github.com/amustafa91/stockline-orders-starter/tree/module-02-lesson-04-complete) |
-| Recap â€” What Can Change | [`module-02-lesson-04-complete`](https://github.com/amustafa91/stockline-orders-starter/tree/module-02-lesson-04-complete) | Same checkpoint; use a practice branch for the exercise |
+| Recap — What Can Change | [`module-02-lesson-04-complete`](https://github.com/amustafa91/stockline-orders-starter/tree/module-02-lesson-04-complete) | Same checkpoint; use a practice branch for the exercise |
 
 `main` starts Module 1. For Module 2, finish Module 1 first, then use `module-02-start`. Each completed branch is the next lesson's starting code. The recap uses the Lesson 4 completion. Use these public GitHub branches as the course checkpoints; the optional exercises are yours to implement.
