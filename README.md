@@ -2,17 +2,37 @@
 
 This is the complete working Module 2 Lesson 4 application from `f80c500e194e4c01898992155525aaa6e88f0ead`, plus three supplied support files. Expected baseline: **62 cumulative checks**.
 
-Local starting branch: `module-03-lesson-01-start`. Local completed comparison: `module-03-lesson-01-complete`. These branches are prepared locally; no new remote branch or publication is assumed.
+## Get the code and choose your checkpoint
 
-## Acquire the support scaffold before the lesson
+Prerequisites: .NET 10 SDK, Git, a C# editor and Postman. Git tracks your local work; GitHub hosts the public repository. You do not need a GitHub account to clone it.
 
-Use this starting checkpoint rather than bare `f80c500`. Preserve your own work before switching branches, then create a practice branch:
+Clone once, then work from the repository root:
+
+```powershell
+git clone https://github.com/amustafa91/stockline-orders-starter.git
+cd stockline-orders-starter
+```
+
+A normal clone begins on `main`, the Module 1 starter. Module 3 continues the completed Module 2 application; choose its lesson checkpoint explicitly.
+
+| Lesson | Start from | Compare after your attempt |
+|---|---|---|
+| M03L01 — Attempt Diagnostics | [`module-03-lesson-01-start`](https://github.com/amustafa91/stockline-orders-starter/tree/module-03-lesson-01-start) | [`module-03-lesson-01-complete`](https://github.com/amustafa91/stockline-orders-starter/tree/module-03-lesson-01-complete) |
+| M03L02 — One Order, Two Local Reactions | [`module-03-lesson-01-complete`](https://github.com/amustafa91/stockline-orders-starter/tree/module-03-lesson-01-complete) | [`module-03-lesson-02-complete`](https://github.com/amustafa91/stockline-orders-starter/tree/module-03-lesson-02-complete) |
+
+For an existing clone, save your files and commit or stash unfinished work, including untracked files, before changing branches. Check `git status`, fetch the checkpoint refs, then create your own practice branch from the remote lesson start:
 
 ```powershell
 git status
-git switch module-03-lesson-01-start
-git switch -c my-module-03-lesson-01
+git fetch origin
+git switch -c my-module-03-lesson-01 origin/module-03-lesson-01-start
 ```
+
+Choose a fresh practice-branch name if that name already exists. Keep your own edited application checked out while testing it; use the completed branch for comparison after your attempt. The unmodified starting checkpoint and the completed checkpoint have different expected checks.
+
+## Supplied support scaffold
+
+Use this starting checkpoint rather than bare `f80c500`. It includes the full working L4 application and three inactive support types; the decorator, DI wiring and controller remain learner edits.
 
 The supplied files, under `src/Stockline.Api/Diagnostics`, are:
 
@@ -24,7 +44,7 @@ Read these support types when the lesson introduces them. They are supplied scaf
 
 ## Verify and run the unchanged starting application
 
-Prerequisites: .NET 10 SDK, Git, a C# editor and Postman. From the repository root:
+From the repository root:
 
 ```powershell
 dotnet run --project tests/Stockline.Lesson04.Checks
