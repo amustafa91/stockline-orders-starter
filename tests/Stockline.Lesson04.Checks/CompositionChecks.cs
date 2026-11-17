@@ -21,17 +21,31 @@ internal static class CompositionChecks
             && firstWorkflow != second.ServiceProvider.GetRequiredService<PlaceOrder>(),
             "PlaceOrder is scoped per request");
         var firstGateway = first.ServiceProvider.GetRequiredService<IPaymentGateway>();
-        check(firstGateway is PaymentAdapter
+        check(firstGateway is DiagnosticPaymentGateway
             && firstGateway == first.ServiceProvider.GetRequiredService<IPaymentGateway>()
             && firstGateway != second.ServiceProvider.GetRequiredService<IPaymentGateway>(),
-            "The production gateway is a scoped adapter");
+            "The production gateway is a scoped diagnostic decorator");
         check(first.ServiceProvider.GetRequiredService<OrderStore>() == second.ServiceProvider.GetRequiredService<OrderStore>()
             && first.ServiceProvider.GetRequiredService<OrderPricing>() == second.ServiceProvider.GetRequiredService<OrderPricing>(),
             "Order storage and stateless pricing are shared across scopes");
 
+        var sink = first.ServiceProvider.GetRequiredService<LocalPaymentAttemptSink>();
+        check(ReferenceEquals(sink, second.ServiceProvider.GetRequiredService<LocalPaymentAttemptSink>())
+            && ReferenceEquals(sink, first.ServiceProvider.GetRequiredService<IPaymentAttemptSink>()),
+            "Diagnostics use one shared sink across request scopes and registrations");
+        check(first.ServiceProvider.GetRequiredService<PaymentAdapter>()
+            != second.ServiceProvider.GetRequiredService<PaymentAdapter>(),
+            "The concrete inner adapter remains scoped");
+
         var result = (OrderPlaced)await firstWorkflow.Execute(new("CAB-105", 10), default);
         check(result.Order.Total == 63.75m && result.Order.Status == "Confirmed",
             "The production graph resolves and authorizes the selected offer");
+
+        check(sink.Snapshot().Length == 1
+            && sink.Snapshot()[0].OperationKey == result.Order.OperationKey
+            && sink.Snapshot()[0].Decision == PaymentDecision.Approved
+            && sink.Snapshot()[0].Amount == result.Order.Total,
+            "The production graph records one application attempt without changing its result");
 
         var substitute = new RecordingGateway();
         services.RemoveAll<IPaymentGateway>();

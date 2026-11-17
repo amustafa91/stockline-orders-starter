@@ -1,3 +1,4 @@
 <Solution>
   <Project Path="src/Stockline.Api/Stockline.csproj" />
+  <Project Path="tests/Stockline.Lesson04.Checks/Stockline.Lesson04.Checks.csproj" />
 </Solution>

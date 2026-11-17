@@ -8,6 +8,12 @@ void Check(bool value, string label)
     if (!value) throw new Exception(label);
     Console.WriteLine($"PASS {++passed}: {label}");
 }
+if (args.Contains("--diagnostics-only"))
+{
+    await PaymentAttemptDiagnosticsChecks.Run(Check);
+    Console.WriteLine($"Verified {passed} diagnostic checks.");
+    return;
+}
 var pricing = new OrderPricing([new WholesaleDiscount(), new CableCampaign()]);
 var catalog = new ProductCatalog();
 var store = new OrderStore();
@@ -123,6 +129,8 @@ Check(extendedPricing.Calculate(new("BRG-204", 12m, "USD"), 10) == 96m,
 await GatewayContractChecks.Run(Check);
 
 await CompositionChecks.Run(Check);
+
+await PaymentAttemptDiagnosticsChecks.Run(Check);
 
 Console.WriteLine($"Verified {passed} checks.");
 

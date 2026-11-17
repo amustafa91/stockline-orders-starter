@@ -13,6 +13,12 @@ internal static class GatewayContractChecks
             "Gateway contract: production adapter with local simulator");
         check(await KeepsPromise(substitute, scenario => substitute.Scenario = scenario),
             "Gateway contract: deterministic test substitute");
+        check(await KeepsPromise(new DiagnosticPaymentGateway(adapter, new LocalPaymentAttemptSink()),
+            scenario => simulator.Scenario = scenario),
+            "Gateway contract: decorated production adapter with local simulator");
+        check(await KeepsPromise(new DiagnosticPaymentGateway(substitute, new LocalPaymentAttemptSink()),
+            scenario => substitute.Scenario = scenario),
+            "Gateway contract: decorated deterministic test substitute");
         check(!await KeepsPromise(new BrokenGateway(), _ => { }),
             "Gateway contract catches an implementation that always approves");
         check(simulator.Events.Any(e => e.Action == "ReplyLost" && e.Amount == 42m),

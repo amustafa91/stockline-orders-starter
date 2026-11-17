@@ -21,6 +21,26 @@
     {
       "key": "m02OrderId",
       "value": ""
+    },
+    {
+      "key": "m03OrderId",
+      "value": ""
+    },
+    {
+      "key": "m03OperationKey",
+      "value": ""
+    },
+    {
+      "key": "m03Decision",
+      "value": ""
+    },
+    {
+      "key": "m03OrderStatus",
+      "value": ""
+    },
+    {
+      "key": "m03BeforeAttemptIds",
+      "value": ""
     }
   ],
   "item": [
@@ -1159,6 +1179,353 @@
                       "pm.test(\"Stored order found\", () => pm.response.to.have.status(200));"
                     ]
                   }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Module 03 - Design Patterns in Context",
+      "item": [
+        {
+          "name": "Lesson 01 - Attempt Diagnostics Without Rewriting the Adapter",
+          "description": "Development only. Run the approval sequence first. Decline and lost-reply folders require a manual simulator environment change and API restart; do not run all scenario folders as one collection run. No real provider, retry or durable recording.",
+          "item": [
+            {
+              "name": "01 - Approval - default Approve and SUCCESS",
+              "item": [
+                {
+                  "name": "Create CAB order - 201 and 63.75",
+                  "request": {
+                    "method": "POST",
+                    "url": "{{baseUrl}}/orders",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"sku\": \"CAB-105\",\n  \"quantity\": 10\n}"
+                    }
+                  },
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test(\"Unchanged checkout response\", () => { pm.response.to.have.status(201); pm.expect(pm.response.json().total).to.eql(63.75); pm.expect(pm.response.json().status).to.eql(\"Confirmed\"); });",
+                          "const order = pm.response.json();",
+                          "pm.collectionVariables.set(\"m03OrderId\", order.id);",
+                          "pm.collectionVariables.set(\"m03OperationKey\", order.operationKey);",
+                          "pm.collectionVariables.set(\"m03Decision\", \"Approved\");",
+                          "pm.collectionVariables.set(\"m03OrderStatus\", \"Confirmed\");"
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "Read the last order in this API process",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/orders/{{m03OrderId}}"
+                  },
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test(\"Order state and captured price are unchanged\", () => { pm.response.to.have.status(200); const order = pm.response.json(); pm.expect(order.total).to.eql(63.75); pm.expect(order.status).to.eql(pm.collectionVariables.get(\"m03OrderStatus\")); });"
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "Read the last authorization attempt",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/diagnostics/payment-attempts?operationKey={{m03OperationKey}}",
+                    "description": "Read before restarting or making enough requests to evict this entry. The sink is process-local, capacity 100, oldest-first; it is not a financial audit."
+                  },
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test(\"One returned application attempt, original decision\", () => { pm.response.to.have.status(200); const rows = pm.response.json(); pm.expect(rows.length).to.eql(1); pm.expect(rows[0].operationKey).to.eql(pm.collectionVariables.get(\"m03OperationKey\")); pm.expect(rows[0].amount).to.eql(63.75); pm.expect(rows[0].termination).to.eql(\"Returned\"); pm.expect(rows[0].decision).to.eql(pm.collectionVariables.get(\"m03Decision\")); pm.expect(rows[0].exceptionType).to.eql(null); });"
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "02 - Invalid input - run these three in order",
+              "item": [
+                {
+                  "name": "Snapshot retained attempt IDs before invalid input",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/diagnostics/payment-attempts"
+                  },
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.response.to.have.status(200);",
+                          "pm.collectionVariables.set(\"m03BeforeAttemptIds\", JSON.stringify(pm.response.json().map(x => x.attemptId).sort()));"
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "Unknown SKU - no authorization - 400",
+                  "request": {
+                    "method": "POST",
+                    "url": "{{baseUrl}}/orders",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"sku\": \"UNKNOWN\",\n  \"quantity\": 10\n}"
+                    }
+                  },
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test(\"Rejected before authorization\", () => pm.response.to.have.status(400));"
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "Retained attempt IDs unchanged after invalid input",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/diagnostics/payment-attempts"
+                  },
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test(\"No application authorization attempt was added\", () => { pm.response.to.have.status(200); pm.expect(JSON.stringify(pm.response.json().map(x => x.attemptId).sort())).to.eql(pm.collectionVariables.get(\"m03BeforeAttemptIds\")); });"
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "03 - Decline - restart with PaymentProvider__Scenario=Decline",
+              "item": [
+                {
+                  "name": "Declined checkout - 409 and 63.75",
+                  "request": {
+                    "method": "POST",
+                    "url": "{{baseUrl}}/orders",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"sku\": \"CAB-105\",\n  \"quantity\": 10\n}"
+                    }
+                  },
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test(\"Unchanged checkout response\", () => { pm.response.to.have.status(409); pm.expect(pm.response.json().total).to.eql(63.75); pm.expect(pm.response.json().status).to.eql(\"Declined\"); });",
+                          "const order = pm.response.json();",
+                          "pm.collectionVariables.set(\"m03OrderId\", order.id);",
+                          "pm.collectionVariables.set(\"m03OperationKey\", order.operationKey);",
+                          "pm.collectionVariables.set(\"m03Decision\", \"Declined\");",
+                          "pm.collectionVariables.set(\"m03OrderStatus\", \"Declined\");"
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "Read the last order in this API process",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/orders/{{m03OrderId}}"
+                  },
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test(\"Order state and captured price are unchanged\", () => { pm.response.to.have.status(200); const order = pm.response.json(); pm.expect(order.total).to.eql(63.75); pm.expect(order.status).to.eql(pm.collectionVariables.get(\"m03OrderStatus\")); });"
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "Read the last authorization attempt",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/diagnostics/payment-attempts?operationKey={{m03OperationKey}}",
+                    "description": "Read before restarting or making enough requests to evict this entry. The sink is process-local, capacity 100, oldest-first; it is not a financial audit."
+                  },
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test(\"One returned application attempt, original decision\", () => { pm.response.to.have.status(200); const rows = pm.response.json(); pm.expect(rows.length).to.eql(1); pm.expect(rows[0].operationKey).to.eql(pm.collectionVariables.get(\"m03OperationKey\")); pm.expect(rows[0].amount).to.eql(63.75); pm.expect(rows[0].termination).to.eql(\"Returned\"); pm.expect(rows[0].decision).to.eql(pm.collectionVariables.get(\"m03Decision\")); pm.expect(rows[0].exceptionType).to.eql(null); });"
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "04 - Lost reply - restart with PaymentProvider__Scenario=AuthorizeThenDisconnect",
+              "item": [
+                {
+                  "name": "Indeterminate checkout - 202 and 63.75",
+                  "request": {
+                    "method": "POST",
+                    "url": "{{baseUrl}}/orders",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"sku\": \"CAB-105\",\n  \"quantity\": 10\n}"
+                    }
+                  },
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test(\"Unchanged checkout response\", () => { pm.response.to.have.status(202); pm.expect(pm.response.json().total).to.eql(63.75); pm.expect(pm.response.json().status).to.eql(\"PendingReconciliation\"); });",
+                          "const order = pm.response.json();",
+                          "pm.collectionVariables.set(\"m03OrderId\", order.id);",
+                          "pm.collectionVariables.set(\"m03OperationKey\", order.operationKey);",
+                          "pm.collectionVariables.set(\"m03Decision\", \"Unknown\");",
+                          "pm.collectionVariables.set(\"m03OrderStatus\", \"PendingReconciliation\");"
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "Read the last order in this API process",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/orders/{{m03OrderId}}"
+                  },
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test(\"Order state and captured price are unchanged\", () => { pm.response.to.have.status(200); const order = pm.response.json(); pm.expect(order.total).to.eql(63.75); pm.expect(order.status).to.eql(pm.collectionVariables.get(\"m03OrderStatus\")); });"
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "Read the last authorization attempt",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/diagnostics/payment-attempts?operationKey={{m03OperationKey}}",
+                    "description": "Read before restarting or making enough requests to evict this entry. The sink is process-local, capacity 100, oldest-first; it is not a financial audit."
+                  },
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test(\"One returned application attempt, original decision\", () => { pm.response.to.have.status(200); const rows = pm.response.json(); pm.expect(rows.length).to.eql(1); pm.expect(rows[0].operationKey).to.eql(pm.collectionVariables.get(\"m03OperationKey\")); pm.expect(rows[0].amount).to.eql(63.75); pm.expect(rows[0].termination).to.eql(\"Returned\"); pm.expect(rows[0].decision).to.eql(pm.collectionVariables.get(\"m03Decision\")); pm.expect(rows[0].exceptionType).to.eql(null); });"
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "05 - Read boundaries",
+              "item": [
+                {
+                  "name": "Unmatched operation key - empty array",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/diagnostics/payment-attempts?operationKey=not-a-recorded-operation"
+                  },
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test(\"No match is an empty snapshot\", () => { pm.response.to.have.status(200); pm.expect(pm.response.json()).to.eql([]); });"
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "Overlong filter - 400",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/diagnostics/payment-attempts?operationKey=kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk"
+                  },
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test(\"Filter length is bounded\", () => pm.response.to.have.status(400));"
+                        ]
+                      }
+                    }
+                  ]
                 }
               ]
             }

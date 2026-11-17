@@ -2,7 +2,13 @@ public static class CheckoutRegistration
 {
     public static IServiceCollection AddStocklineCheckout(this IServiceCollection services)
     {
-        services.AddScoped<IPaymentGateway, PaymentAdapter>();
+        services.AddScoped<PaymentAdapter>();
+        services.AddSingleton<LocalPaymentAttemptSink>();
+        services.AddSingleton<IPaymentAttemptSink>(services =>
+            services.GetRequiredService<LocalPaymentAttemptSink>());
+        services.AddScoped<IPaymentGateway>(services => new DiagnosticPaymentGateway(
+            services.GetRequiredService<PaymentAdapter>(),
+            services.GetRequiredService<IPaymentAttemptSink>()));
         services.AddSingleton<OrderStore>();
         services.AddSingleton<ProductCatalog>();
         services.AddSingleton<IDiscountPolicy, WholesaleDiscount>();
