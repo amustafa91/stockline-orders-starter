@@ -1,14 +1,42 @@
 # Stockline Orders — Module 3 Lesson 02: One Order, Two Local Reactions
 
-Start from local `module-03-lesson-01-complete`, commit `a7e419ee224cf3fbc072694bff489f04e5d974de`. Current local implementation branch: `module-03-lesson-02-complete`. No push or published new branch is assumed.
+Starting checkpoint: [`module-03-lesson-01-complete`](https://github.com/amustafa91/stockline-orders-starter/tree/module-03-lesson-01-complete). Completed comparison: [`module-03-lesson-02-complete`](https://github.com/amustafa91/stockline-orders-starter/tree/module-03-lesson-02-complete).
 
-The preceding lesson's learner scaffold is `module-03-lesson-01-start` (`e772aebd2be8560f3241651150e297e938172230`): full working L4 plus the three supplied Diagnostics support files, with 62 baseline checks. L01 completed code has 37 diagnostic / 104 cumulative checks. Its decorator records the exact original decimal amount, including 63.75 in the normal CAB checkout.
+The preceding lesson's learner scaffold, [`module-03-lesson-01-start`](https://github.com/amustafa91/stockline-orders-starter/tree/module-03-lesson-01-start), contains full working L4 plus three inactive Diagnostics support files and 62 baseline checks. L01 completed code has 37 diagnostic / 104 cumulative checks. Its decorator records the exact original decimal amount, including 63.75 in the normal CAB checkout.
+
+## Get the code and choose your checkpoint
+
+Prerequisites: .NET 10 SDK, Git, a C# editor and Postman. Git tracks your local work; GitHub hosts the public repository. You do not need a GitHub account to clone it.
+
+Clone once, then work from the repository root:
+
+```powershell
+git clone https://github.com/amustafa91/stockline-orders-starter.git
+cd stockline-orders-starter
+```
+
+A normal clone begins on `main`, the Module 1 starter. Module 3 continues the completed Module 2 application; choose its lesson checkpoint explicitly.
+
+| Lesson | Start from | Compare after your attempt |
+|---|---|---|
+| M03L01 — Attempt Diagnostics | [`module-03-lesson-01-start`](https://github.com/amustafa91/stockline-orders-starter/tree/module-03-lesson-01-start) | [`module-03-lesson-01-complete`](https://github.com/amustafa91/stockline-orders-starter/tree/module-03-lesson-01-complete) |
+| M03L02 — One Order, Two Local Reactions | [`module-03-lesson-01-complete`](https://github.com/amustafa91/stockline-orders-starter/tree/module-03-lesson-01-complete) | [`module-03-lesson-02-complete`](https://github.com/amustafa91/stockline-orders-starter/tree/module-03-lesson-02-complete) |
+
+For an existing clone, save your files and commit or stash unfinished work, including untracked files, before changing branches. Check `git status`, fetch the checkpoint refs, then create your own practice branch from the remote lesson start:
+
+```powershell
+git status
+git fetch origin
+git switch -c my-module-03-lesson-02 origin/module-03-lesson-01-complete
+```
+
+Choose a fresh practice-branch name if that name already exists. Keep your own edited application checked out while testing it; use the completed branch for comparison after your attempt. The unmodified starting checkpoint and the completed checkpoint have different expected checks.
 
 ## Why add these reactions?
 
 After confirmation, the local teaching application can show a receipt preview and a fulfillment-preview projection. These are optional projections of the saved order; they do not send email, reserve inventory or create shipments.
 
-Start with two concrete calls after `OrderStore.Complete`. That working direct-call intermediate is retained as the separately supplied `source/direct` comparison snapshot. It actually builds and has 9 focused / 113 cumulative checks plus real local HTTP receipts. It is not claimed to be part of a bare repository clone or a recorded film. The same Lesson 02 Postman requests work against its API and the completed observer implementation.
+Start with two concrete calls after `OrderStore.Complete`. That working direct-call intermediate is retained as the separately supplied `source/direct` comparison snapshot. It actually builds and has 9 focused / 113 cumulative checks plus real local HTTP receipts. Acquire this comparison snapshot from the lesson assets; it is separate from a repository clone. The same Lesson 02 Postman requests work against its API and the completed observer implementation.
 
 Direct calls are reasonable for two stable reactions. The observer comparison moves knowledge of the subscriber list to composition when adding/removing local reactions independently is useful. It adds one domain-specific callback interface and one concrete publisher; there is no generic bus, mediator, async dispatch framework or background worker.
 
@@ -41,11 +69,9 @@ Paths above are under `src/Stockline.Api`. The direct-call intermediate has conc
 
 ## Run checks and API
 
-Prerequisites remain .NET 10 SDK, Git, C# editor and Postman. Save your work and start your own practice branch from the L01 completed checkpoint before editing; compare completed code after your attempt.
+Run from the repository root after implementing the lesson on your practice branch:
 
 ```powershell
-git status
-git switch -c my-module-03-lesson-02 module-03-lesson-01-complete
 dotnet build Stockline.Orders.slnx
 dotnet run --project tests/Stockline.Lesson04.Checks -- --previews-only
 dotnet run --project tests/Stockline.Lesson04.Checks
