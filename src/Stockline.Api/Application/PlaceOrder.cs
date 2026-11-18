@@ -1,7 +1,8 @@
 public sealed class PlaceOrder(
     ProductCatalog catalog, OrderPricing pricing,
     OrderStore store, IPaymentGateway payments,
-    LocalOrderConfirmedPublisher confirmed)
+    LocalOrderConfirmedPublisher confirmed,
+    CustomerCatalog customers, CustomerDiscountPolicyFactory customerPolicies)
 {
     public async Task<PlaceOrderResult> Execute(
         PlaceOrderCommand command, CancellationToken cancellationToken)
@@ -14,7 +15,14 @@ public sealed class PlaceOrder(
         if (product is null)
             return new OrderRejected("Unknown product SKU.");
 
-        var total = pricing.Calculate(product, command.Quantity);
+        var customer = customers.Find(command.CustomerId ?? CustomerCatalog.DefaultCustomerId);
+        if (customer is null)
+            return new OrderRejected("Unknown customer ID.");
+        if (!customer.IsActive)
+            return new OrderRejected("Inactive customer.");
+
+        var customerPolicy = customerPolicies.Select(customer.Category);
+        var total = pricing.Calculate(product, command.Quantity, customerPolicy);
         var order = store.Start(product, command.Quantity, total);
         var decision = await payments.AuthorizeAsync(
             order.OperationKey, order.Total, cancellationToken);

@@ -11,6 +11,8 @@ public static class CheckoutRegistration
             services.GetRequiredService<IPaymentAttemptSink>()));
         services.AddSingleton<OrderStore>();
         services.AddSingleton<ProductCatalog>();
+        services.AddSingleton<CustomerCatalog>();
+        services.AddSingleton<CustomerDiscountPolicyFactory>();
         services.AddSingleton<IDiscountPolicy, WholesaleDiscount>();
         services.AddSingleton<IDiscountPolicy, CableCampaign>();
         services.AddSingleton<OrderPricing>();

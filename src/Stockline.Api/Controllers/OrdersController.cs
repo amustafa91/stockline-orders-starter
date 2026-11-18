@@ -10,7 +10,7 @@ public sealed class OrdersController(PlaceOrder placeOrder, OrderStore store)
         [FromBody] CheckoutRequest request, CancellationToken cancellationToken)
     {
         var result = await placeOrder.Execute(
-            new PlaceOrderCommand(request.Sku, request.Quantity), cancellationToken);
+            new PlaceOrderCommand(request.Sku, request.Quantity, request.CustomerId), cancellationToken);
         return result switch
         {
             OrderRejected rejected => BadRequest(new { error = rejected.Error }),

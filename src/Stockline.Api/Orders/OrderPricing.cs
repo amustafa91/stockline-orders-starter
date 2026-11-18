@@ -2,10 +2,11 @@ public sealed class OrderPricing(IEnumerable<IDiscountPolicy> policies)
 {
     private readonly IDiscountPolicy[] _policies = policies.ToArray();
 
-    public DiscountOffer? SelectOffer(Product product, int quantity)
+    public DiscountOffer? SelectOffer(Product product, int quantity, IDiscountPolicy? customerPolicy = null)
     {
         DiscountOffer? best = null;
-        foreach (var policy in _policies)
+        var candidates = customerPolicy is null ? _policies : _policies.Append(customerPolicy);
+        foreach (var policy in candidates)
         {
             var offer = policy.GetOffer(product, quantity);
             // The earlier policy wins a tie. Composition lists wholesale first.
@@ -16,10 +17,10 @@ public sealed class OrderPricing(IEnumerable<IDiscountPolicy> policies)
         return best;
     }
 
-    public decimal Calculate(Product product, int quantity)
+    public decimal Calculate(Product product, int quantity, IDiscountPolicy? customerPolicy = null)
     {
         var subtotal = product.UnitPrice * quantity;
-        var discountRate = SelectOffer(product, quantity)?.Rate ?? 0m;
+        var discountRate = SelectOffer(product, quantity, customerPolicy)?.Rate ?? 0m;
         return decimal.Round(subtotal * (1m - discountRate), 2, MidpointRounding.AwayFromZero);
     }
 }

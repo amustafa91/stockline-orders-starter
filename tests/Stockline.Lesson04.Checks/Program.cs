@@ -20,6 +20,14 @@ if (args.Contains("--previews-only"))
     Console.WriteLine($"Verified {passed} preview checks.");
     return;
 }
+if (args.Contains("--factory-only"))
+{
+    await CustomerDiscountFactoryChecks.Run(Check);
+    Console.WriteLine($"Verified {passed} factory checks.");
+    return;
+}
+var customers = new CustomerCatalog();
+var customerPolicies = new CustomerDiscountPolicyFactory();
 var previews = new LocalOrderPreviewStore();
 var receipt = new ReceiptPreviewReaction(previews);
 var fulfillment = new FulfillmentPreviewReaction(previews);
@@ -28,7 +36,7 @@ var pricing = new OrderPricing([new WholesaleDiscount(), new CableCampaign()]);
 var catalog = new ProductCatalog();
 var store = new OrderStore();
 var gateway = new RecordingGateway();
-var useCase = new PlaceOrder(catalog, pricing, store, gateway, confirmed);
+var useCase = new PlaceOrder(catalog, pricing, store, gateway, confirmed, customers, customerPolicies);
 var controller = new OrdersController(useCase, store);
 foreach (var item in new[] { ("BRG-204", 24m), ("CAB-105", 15m) })
 {
@@ -81,7 +89,7 @@ var provider = new SimulatedProvider(config);
 var http = new HttpClient(provider) { BaseAddress = new Uri("http://stockline-simulator.test") };
 var adapter = new PaymentAdapter(new FixtureHttpFactory(http));
 var realStore = new OrderStore();
-var real = new OrdersController(new PlaceOrder(catalog, pricing, realStore, adapter, confirmed), realStore);
+var real = new OrdersController(new PlaceOrder(catalog, pricing, realStore, adapter, confirmed, customers, customerPolicies), realStore);
 await real.Place(new("CAB-105",2),default);
 Check(provider.Events.Any(e => e.Action == "Authorized" && e.Amount == 15m), "Actual adapter/provider authorizes catalog amount 15");
 var eventCount=provider.Events.Count;
@@ -90,7 +98,7 @@ Check(provider.Events.Count == eventCount, "Unknown SKU produces no actual provi
 // Direct application tests do not construct a controller or inspect MVC results.
 var directStore = new OrderStore();
 var directGateway = new RecordingGateway();
-var workflow = new PlaceOrder(catalog, pricing, directStore, directGateway, confirmed);
+var workflow = new PlaceOrder(catalog, pricing, directStore, directGateway, confirmed, customers, customerPolicies);
 var placed = (OrderPlaced)await workflow.Execute(new("BRG-204", 10), default);
 Check(placed.Order.Total == 108m && directGateway.LastAmount == 108m && directGateway.Calls == 1,
     "Direct workflow: one authorization for the captured wholesale amount");
@@ -121,7 +129,7 @@ foreach (var (sku, quantity, expected, name) in new[]
 {
     var offerStore = new OrderStore();
     var offerGateway = new RecordingGateway();
-    var offerWorkflow = new PlaceOrder(catalog, pricing, offerStore, offerGateway, confirmed);
+    var offerWorkflow = new PlaceOrder(catalog, pricing, offerStore, offerGateway, confirmed, customers, customerPolicies);
     var result = (OrderPlaced)await offerWorkflow.Execute(new(sku, quantity), default);
     Check(result.Order.Total == expected, $"Offer selection: {name} = {expected}");
     Check(offerStore.Find(result.Order.Id)?.Total == expected
@@ -143,6 +151,8 @@ await CompositionChecks.Run(Check);
 await PaymentAttemptDiagnosticsChecks.Run(Check);
 
 await OrderConfirmedReactionChecks.Run(Check);
+
+await CustomerDiscountFactoryChecks.Run(Check);
 
 Console.WriteLine($"Verified {passed} checks.");
 

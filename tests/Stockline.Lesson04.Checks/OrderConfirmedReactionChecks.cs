@@ -196,7 +196,8 @@ internal static class OrderConfirmedReactionChecks
     private static PlaceOrder Workflow(OrderStore store, IPaymentGateway gateway, LocalOrderPreviewStore previews,
         params IOrderConfirmedReaction[] reactions) => new(new ProductCatalog(),
             new OrderPricing([new WholesaleDiscount(), new CableCampaign()]), store, gateway,
-            new LocalOrderConfirmedPublisher(reactions, previews));
+            new LocalOrderConfirmedPublisher(reactions, previews),
+            new CustomerCatalog(), new CustomerDiscountPolicyFactory());
 
     private sealed class ProbeReaction(Action<OrderConfirmed> invoke) : IOrderConfirmedReaction
     {

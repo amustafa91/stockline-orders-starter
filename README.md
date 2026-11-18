@@ -1,6 +1,6 @@
 # Stockline Orders - Module 3 Lesson 3: Choose the Policy, Then Check Eligibility
 
-This is the starting checkpoint. Start on a practice branch from [`module-03-lesson-03-start`](https://github.com/amustafa91/stockline-orders-starter/tree/module-03-lesson-03-start); compare with [`module-03-lesson-03-complete`](https://github.com/amustafa91/stockline-orders-starter/tree/module-03-lesson-03-complete) after your implementation. Earlier Lessons 1 and 2 are preserved.
+This is the completed checkpoint. Start on a practice branch from [`module-03-lesson-03-start`](https://github.com/amustafa91/stockline-orders-starter/tree/module-03-lesson-03-start); compare with [`module-03-lesson-03-complete`](https://github.com/amustafa91/stockline-orders-starter/tree/module-03-lesson-03-complete) after your implementation. Earlier Lessons 1 and 2 are preserved.
 
 ## Get the code
 
@@ -26,7 +26,7 @@ For an existing checkout, commit or stash unfinished work including untracked fi
 
 ## Baseline and completed behavior
 
-The starting application is completed Lesson 2 plus one inactive seeded CustomerCatalog helper (inspected, not authored during the core factory edit): standard CAB-105 quantity10 creates a Confirmed order at63.75, one application payment attempt and two local previews. The updated setup guide and Postman requests are supplied; trade/customer validation behavior is implemented during this lesson.
+The starting application is completed Lesson 2: standard CAB-105 quantity10 creates a Confirmed order at63.75, one application payment attempt and two local previews. The updated setup guide and Postman requests are supplied; trade/customer validation behavior is implemented during this lesson.
 
 The simple factory chooses NoCustomerDiscount for Standard or TradeCustomerDiscount for Trade; unknown enum categories fail explicitly. The trade policy offers20% only at quantity>=10. The selected customer offer joins the existing best-offer scan: discounts are not stacked. Customer validation precedes order creation and authorization. CustomerCatalog contains local fixture IDs standard(default), trade and inactive, case-sensitive. Omitted/null customerId keeps the original standard behavior. Unknown/inactive IDs return400. These IDs do not authenticate a caller; production identity and pricing benefits must come from authenticated server context.
 
