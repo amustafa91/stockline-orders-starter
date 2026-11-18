@@ -55,6 +55,16 @@
       "key": "m03L03OperationKey",
       "value": "",
       "type": "string"
+    },
+    {
+      "key": "m03L04OrderId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "m03L04OperationKey",
+      "value": "",
+      "type": "string"
     }
   ],
   "item": [
@@ -2190,6 +2200,631 @@
                       "pm.test('Explicit customer rejection', () => pm.expect(pm.response.json().error).to.eql(\"Inactive customer.\"));"
                     ]
                   }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Lesson 04 - One Request, One Handler",
+          "description": "Run one case at a time in Postman Local mode against the loopback Development API. For each case, set the scenario named in the folder, restart if changing it, and keep the process running across the POST and its GETs. Repeat the same requests before and after dispatcher wiring.",
+          "item": [
+            {
+              "name": "01 - Standard CAB 10 - Approve",
+              "item": [
+                {
+                  "name": "POST - 201, Confirmed, USD 63.75",
+                  "request": {
+                    "method": "POST",
+                    "url": "{{baseUrl}}/orders",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"sku\": \"CAB-105\",\n  \"quantity\": 10,\n  \"customerId\": \"standard\"\n}"
+                    }
+                  },
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test('HTTP 201', () => pm.response.to.have.status(201));",
+                          "pm.collectionVariables.unset('m03L04OrderId'); pm.collectionVariables.unset('m03L04OperationKey');",
+                          "pm.test('Checkout amount and saved state', () => { const order = pm.response.json(); pm.expect(order.total).to.eql(63.75); pm.expect(order.currency).to.eql('USD'); pm.expect(order.status).to.eql('Confirmed'); });",
+                          "if (pm.response.code === 201) { const order = pm.response.json(); pm.collectionVariables.set('m03L04OrderId', order.id); pm.collectionVariables.set('m03L04OperationKey', order.operationKey); }"
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "GET saved order - same ID, operation key and amount",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/orders/{{m03L04OrderId}}"
+                  },
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                          "pm.test('Saved order agrees with the POST', () => { const order = pm.response.json(); pm.expect(order.total).to.eql(63.75); pm.expect(order.currency).to.eql('USD'); pm.expect(order.status).to.eql('Confirmed'); pm.expect(order.id).to.eql(pm.collectionVariables.get('m03L04OrderId')); pm.expect(order.operationKey).to.eql(pm.collectionVariables.get('m03L04OperationKey')); });"
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "GET previews - receipt and fulfillment",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/orders/{{m03L04OrderId}}/previews"
+                  },
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                          "pm.test('Both local projections match the same order', () => { const view = pm.response.json(); const id = pm.collectionVariables.get('m03L04OrderId'); pm.expect(view.receipt).to.eql({orderId:id,total:63.75,currency:'USD'}); pm.expect(view.fulfillment).to.eql({orderId:id,sku:'CAB-105',quantity:10}); pm.expect(view.failedReactions).to.eql([]); });"
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "GET authorization - one Returned / Approved at USD 63.75",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/diagnostics/payment-attempts?operationKey={{m03L04OperationKey}}"
+                  },
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                          "pm.test('One matching authorization attempt', () => { const rows = pm.response.json(); pm.expect(rows).to.have.lengthOf(1); const attempt = rows[0]; pm.expect(attempt.operationKey).to.eql(pm.collectionVariables.get('m03L04OperationKey')); pm.expect(attempt.amount).to.eql(63.75); pm.expect(attempt.termination).to.eql('Returned'); pm.expect(attempt.decision).to.eql('Approved'); pm.expect(attempt.exceptionType).to.eql(null); });"
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "02 - Trade CAB 10 - Approve",
+              "item": [
+                {
+                  "name": "POST - 201, Confirmed, USD 60.00",
+                  "request": {
+                    "method": "POST",
+                    "url": "{{baseUrl}}/orders",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"sku\": \"CAB-105\",\n  \"quantity\": 10,\n  \"customerId\": \"trade\"\n}"
+                    }
+                  },
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test('HTTP 201', () => pm.response.to.have.status(201));",
+                          "pm.collectionVariables.unset('m03L04OrderId'); pm.collectionVariables.unset('m03L04OperationKey');",
+                          "pm.test('Checkout amount and saved state', () => { const order = pm.response.json(); pm.expect(order.total).to.eql(60.00); pm.expect(order.currency).to.eql('USD'); pm.expect(order.status).to.eql('Confirmed'); });",
+                          "if (pm.response.code === 201) { const order = pm.response.json(); pm.collectionVariables.set('m03L04OrderId', order.id); pm.collectionVariables.set('m03L04OperationKey', order.operationKey); }"
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "GET saved order - same ID, operation key and amount",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/orders/{{m03L04OrderId}}"
+                  },
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                          "pm.test('Saved order agrees with the POST', () => { const order = pm.response.json(); pm.expect(order.total).to.eql(60.00); pm.expect(order.currency).to.eql('USD'); pm.expect(order.status).to.eql('Confirmed'); pm.expect(order.id).to.eql(pm.collectionVariables.get('m03L04OrderId')); pm.expect(order.operationKey).to.eql(pm.collectionVariables.get('m03L04OperationKey')); });"
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "GET previews - receipt and fulfillment",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/orders/{{m03L04OrderId}}/previews"
+                  },
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                          "pm.test('Both local projections match the same order', () => { const view = pm.response.json(); const id = pm.collectionVariables.get('m03L04OrderId'); pm.expect(view.receipt).to.eql({orderId:id,total:60.00,currency:'USD'}); pm.expect(view.fulfillment).to.eql({orderId:id,sku:'CAB-105',quantity:10}); pm.expect(view.failedReactions).to.eql([]); });"
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "GET authorization - one Returned / Approved at USD 60.00",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/diagnostics/payment-attempts?operationKey={{m03L04OperationKey}}"
+                  },
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                          "pm.test('One matching authorization attempt', () => { const rows = pm.response.json(); pm.expect(rows).to.have.lengthOf(1); const attempt = rows[0]; pm.expect(attempt.operationKey).to.eql(pm.collectionVariables.get('m03L04OperationKey')); pm.expect(attempt.amount).to.eql(60.00); pm.expect(attempt.termination).to.eql('Returned'); pm.expect(attempt.decision).to.eql('Approved'); pm.expect(attempt.exceptionType).to.eql(null); });"
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "03 - Trade CAB 9 - Approve",
+              "item": [
+                {
+                  "name": "POST - 201, Confirmed, USD 57.38",
+                  "request": {
+                    "method": "POST",
+                    "url": "{{baseUrl}}/orders",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"sku\": \"CAB-105\",\n  \"quantity\": 9,\n  \"customerId\": \"trade\"\n}"
+                    }
+                  },
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test('HTTP 201', () => pm.response.to.have.status(201));",
+                          "pm.collectionVariables.unset('m03L04OrderId'); pm.collectionVariables.unset('m03L04OperationKey');",
+                          "pm.test('Checkout amount and saved state', () => { const order = pm.response.json(); pm.expect(order.total).to.eql(57.38); pm.expect(order.currency).to.eql('USD'); pm.expect(order.status).to.eql('Confirmed'); });",
+                          "if (pm.response.code === 201) { const order = pm.response.json(); pm.collectionVariables.set('m03L04OrderId', order.id); pm.collectionVariables.set('m03L04OperationKey', order.operationKey); }"
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "GET saved order - same ID, operation key and amount",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/orders/{{m03L04OrderId}}"
+                  },
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                          "pm.test('Saved order agrees with the POST', () => { const order = pm.response.json(); pm.expect(order.total).to.eql(57.38); pm.expect(order.currency).to.eql('USD'); pm.expect(order.status).to.eql('Confirmed'); pm.expect(order.id).to.eql(pm.collectionVariables.get('m03L04OrderId')); pm.expect(order.operationKey).to.eql(pm.collectionVariables.get('m03L04OperationKey')); });"
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "GET previews - receipt and fulfillment",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/orders/{{m03L04OrderId}}/previews"
+                  },
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                          "pm.test('Both local projections match the same order', () => { const view = pm.response.json(); const id = pm.collectionVariables.get('m03L04OrderId'); pm.expect(view.receipt).to.eql({orderId:id,total:57.38,currency:'USD'}); pm.expect(view.fulfillment).to.eql({orderId:id,sku:'CAB-105',quantity:9}); pm.expect(view.failedReactions).to.eql([]); });"
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "GET authorization - one Returned / Approved at USD 57.38",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/diagnostics/payment-attempts?operationKey={{m03L04OperationKey}}"
+                  },
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                          "pm.test('One matching authorization attempt', () => { const rows = pm.response.json(); pm.expect(rows).to.have.lengthOf(1); const attempt = rows[0]; pm.expect(attempt.operationKey).to.eql(pm.collectionVariables.get('m03L04OperationKey')); pm.expect(attempt.amount).to.eql(57.38); pm.expect(attempt.termination).to.eql('Returned'); pm.expect(attempt.decision).to.eql('Approved'); pm.expect(attempt.exceptionType).to.eql(null); });"
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "04 - Omitted customer CAB 10 - Approve",
+              "item": [
+                {
+                  "name": "POST - 201, Confirmed, USD 63.75",
+                  "request": {
+                    "method": "POST",
+                    "url": "{{baseUrl}}/orders",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"sku\": \"CAB-105\",\n  \"quantity\": 10\n}"
+                    }
+                  },
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test('HTTP 201', () => pm.response.to.have.status(201));",
+                          "pm.collectionVariables.unset('m03L04OrderId'); pm.collectionVariables.unset('m03L04OperationKey');",
+                          "pm.test('Checkout amount and saved state', () => { const order = pm.response.json(); pm.expect(order.total).to.eql(63.75); pm.expect(order.currency).to.eql('USD'); pm.expect(order.status).to.eql('Confirmed'); });",
+                          "if (pm.response.code === 201) { const order = pm.response.json(); pm.collectionVariables.set('m03L04OrderId', order.id); pm.collectionVariables.set('m03L04OperationKey', order.operationKey); }"
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "GET saved order - same ID, operation key and amount",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/orders/{{m03L04OrderId}}"
+                  },
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                          "pm.test('Saved order agrees with the POST', () => { const order = pm.response.json(); pm.expect(order.total).to.eql(63.75); pm.expect(order.currency).to.eql('USD'); pm.expect(order.status).to.eql('Confirmed'); pm.expect(order.id).to.eql(pm.collectionVariables.get('m03L04OrderId')); pm.expect(order.operationKey).to.eql(pm.collectionVariables.get('m03L04OperationKey')); });"
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "GET previews - receipt and fulfillment",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/orders/{{m03L04OrderId}}/previews"
+                  },
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                          "pm.test('Both local projections match the same order', () => { const view = pm.response.json(); const id = pm.collectionVariables.get('m03L04OrderId'); pm.expect(view.receipt).to.eql({orderId:id,total:63.75,currency:'USD'}); pm.expect(view.fulfillment).to.eql({orderId:id,sku:'CAB-105',quantity:10}); pm.expect(view.failedReactions).to.eql([]); });"
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "GET authorization - one Returned / Approved at USD 63.75",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/diagnostics/payment-attempts?operationKey={{m03L04OperationKey}}"
+                  },
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                          "pm.test('One matching authorization attempt', () => { const rows = pm.response.json(); pm.expect(rows).to.have.lengthOf(1); const attempt = rows[0]; pm.expect(attempt.operationKey).to.eql(pm.collectionVariables.get('m03L04OperationKey')); pm.expect(attempt.amount).to.eql(63.75); pm.expect(attempt.termination).to.eql('Returned'); pm.expect(attempt.decision).to.eql('Approved'); pm.expect(attempt.exceptionType).to.eql(null); });"
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "05 - Reject unknown or inactive customer - Approve",
+              "item": [
+                {
+                  "name": "POST missing customer - 400",
+                  "request": {
+                    "method": "POST",
+                    "url": "{{baseUrl}}/orders",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"sku\": \"CAB-105\",\n  \"quantity\": 10,\n  \"customerId\": \"missing\"\n}"
+                    }
+                  },
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test('HTTP 400', () => pm.response.to.have.status(400));",
+                          "pm.test('Explicit customer rejection', () => pm.expect(pm.response.json().error).to.eql(\"Unknown customer ID.\"));"
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "POST inactive customer - 400",
+                  "request": {
+                    "method": "POST",
+                    "url": "{{baseUrl}}/orders",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"sku\": \"CAB-105\",\n  \"quantity\": 10,\n  \"customerId\": \"inactive\"\n}"
+                    }
+                  },
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test('HTTP 400', () => pm.response.to.have.status(400));",
+                          "pm.test('Explicit customer rejection', () => pm.expect(pm.response.json().error).to.eql(\"Inactive customer.\"));"
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "06 - Standard CAB 10 - Decline",
+              "item": [
+                {
+                  "name": "POST - 409, Declined, USD 63.75",
+                  "request": {
+                    "method": "POST",
+                    "url": "{{baseUrl}}/orders",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"sku\": \"CAB-105\",\n  \"quantity\": 10,\n  \"customerId\": \"standard\"\n}"
+                    }
+                  },
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test('HTTP 409', () => pm.response.to.have.status(409));",
+                          "pm.collectionVariables.unset('m03L04OrderId'); pm.collectionVariables.unset('m03L04OperationKey');",
+                          "pm.test('Checkout amount and saved state', () => { const order = pm.response.json(); pm.expect(order.total).to.eql(63.75); pm.expect(order.currency).to.eql('USD'); pm.expect(order.status).to.eql('Declined'); });",
+                          "if (pm.response.code === 409) { const order = pm.response.json(); pm.collectionVariables.set('m03L04OrderId', order.id); pm.collectionVariables.set('m03L04OperationKey', order.operationKey); }"
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "GET saved order - same ID, operation key and amount",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/orders/{{m03L04OrderId}}"
+                  },
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                          "pm.test('Saved order agrees with the POST', () => { const order = pm.response.json(); pm.expect(order.total).to.eql(63.75); pm.expect(order.currency).to.eql('USD'); pm.expect(order.status).to.eql('Declined'); pm.expect(order.id).to.eql(pm.collectionVariables.get('m03L04OrderId')); pm.expect(order.operationKey).to.eql(pm.collectionVariables.get('m03L04OperationKey')); });"
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "GET previews - 404 without confirmation",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/orders/{{m03L04OrderId}}/previews"
+                  },
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test('HTTP 404', () => pm.response.to.have.status(404));"
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "GET authorization - one Returned / Declined at USD 63.75",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/diagnostics/payment-attempts?operationKey={{m03L04OperationKey}}"
+                  },
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                          "pm.test('One matching authorization attempt', () => { const rows = pm.response.json(); pm.expect(rows).to.have.lengthOf(1); const attempt = rows[0]; pm.expect(attempt.operationKey).to.eql(pm.collectionVariables.get('m03L04OperationKey')); pm.expect(attempt.amount).to.eql(63.75); pm.expect(attempt.termination).to.eql('Returned'); pm.expect(attempt.decision).to.eql('Declined'); pm.expect(attempt.exceptionType).to.eql(null); });"
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "07 - Standard CAB 10 - AuthorizeThenDisconnect",
+              "item": [
+                {
+                  "name": "POST - 202, PendingReconciliation, USD 63.75",
+                  "request": {
+                    "method": "POST",
+                    "url": "{{baseUrl}}/orders",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"sku\": \"CAB-105\",\n  \"quantity\": 10,\n  \"customerId\": \"standard\"\n}"
+                    }
+                  },
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test('HTTP 202', () => pm.response.to.have.status(202));",
+                          "pm.collectionVariables.unset('m03L04OrderId'); pm.collectionVariables.unset('m03L04OperationKey');",
+                          "pm.test('Checkout amount and saved state', () => { const order = pm.response.json(); pm.expect(order.total).to.eql(63.75); pm.expect(order.currency).to.eql('USD'); pm.expect(order.status).to.eql('PendingReconciliation'); });",
+                          "if (pm.response.code === 202) { const order = pm.response.json(); pm.collectionVariables.set('m03L04OrderId', order.id); pm.collectionVariables.set('m03L04OperationKey', order.operationKey); }"
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "GET saved order - same ID, operation key and amount",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/orders/{{m03L04OrderId}}"
+                  },
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                          "pm.test('Saved order agrees with the POST', () => { const order = pm.response.json(); pm.expect(order.total).to.eql(63.75); pm.expect(order.currency).to.eql('USD'); pm.expect(order.status).to.eql('PendingReconciliation'); pm.expect(order.id).to.eql(pm.collectionVariables.get('m03L04OrderId')); pm.expect(order.operationKey).to.eql(pm.collectionVariables.get('m03L04OperationKey')); });"
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "GET previews - 404 without confirmation",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/orders/{{m03L04OrderId}}/previews"
+                  },
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test('HTTP 404', () => pm.response.to.have.status(404));"
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "GET authorization - one Returned / Unknown at USD 63.75",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/diagnostics/payment-attempts?operationKey={{m03L04OperationKey}}"
+                  },
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                          "pm.test('One matching authorization attempt', () => { const rows = pm.response.json(); pm.expect(rows).to.have.lengthOf(1); const attempt = rows[0]; pm.expect(attempt.operationKey).to.eql(pm.collectionVariables.get('m03L04OperationKey')); pm.expect(attempt.amount).to.eql(63.75); pm.expect(attempt.termination).to.eql('Returned'); pm.expect(attempt.decision).to.eql('Unknown'); pm.expect(attempt.exceptionType).to.eql(null); });"
+                        ]
+                      }
+                    }
+                  ]
                 }
               ]
             }
