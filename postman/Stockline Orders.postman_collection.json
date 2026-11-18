@@ -45,6 +45,16 @@
     {
       "key": "m03ReceiptFailure",
       "value": "false"
+    },
+    {
+      "key": "m03L03OrderId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "m03L03OperationKey",
+      "value": "",
+      "type": "string"
     }
   ],
   "item": [
@@ -1896,6 +1906,290 @@
                       }
                     }
                   ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Lesson 03 - Choose the Policy Then Check Eligibility",
+          "description": "Run against the Lesson 3 API on localhost in Development with the in-process simulator set to Approve / SUCCESS. Customer IDs are case-sensitive seeded teaching fixtures. Run the Trade CAB 10 folder in order in the same API process.",
+          "item": [
+            {
+              "name": "Default Standard CAB 10 - 63.75",
+              "request": {
+                "method": "POST",
+                "url": "{{baseUrl}}/orders",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"sku\": \"CAB-105\",\n  \"quantity\": 10\n}"
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('HTTP 201', () => pm.response.to.have.status(201));",
+                      "pm.test('Confirmed at 63.75', () => { const order = pm.response.json(); pm.expect(order.total).to.eql(63.75); pm.expect(order.status).to.eql('Confirmed'); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Explicit Standard CAB 10 - 63.75",
+              "request": {
+                "method": "POST",
+                "url": "{{baseUrl}}/orders",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"sku\": \"CAB-105\",\n  \"quantity\": 10,\n  \"customerId\": \"standard\"\n}"
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('HTTP 201', () => pm.response.to.have.status(201));",
+                      "pm.test('Confirmed at 63.75', () => { const order = pm.response.json(); pm.expect(order.total).to.eql(63.75); pm.expect(order.status).to.eql('Confirmed'); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Trade CAB 10 - POST, order and payment attempt",
+              "item": [
+                {
+                  "name": "Trade CAB 10 - 60.00",
+                  "request": {
+                    "method": "POST",
+                    "url": "{{baseUrl}}/orders",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"sku\": \"CAB-105\",\n  \"quantity\": 10,\n  \"customerId\": \"trade\"\n}"
+                    }
+                  },
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test('HTTP 201', () => pm.response.to.have.status(201));",
+                          "pm.test('Confirmed at 60', () => { const order = pm.response.json(); pm.expect(order.total).to.eql(60); pm.expect(order.status).to.eql('Confirmed'); });",
+                          "pm.collectionVariables.unset('m03L03OrderId');",
+                          "pm.collectionVariables.unset('m03L03OperationKey');",
+                          "if (pm.response.code === 201) { const order = pm.response.json(); pm.collectionVariables.set('m03L03OrderId', order.id); pm.collectionVariables.set('m03L03OperationKey', order.operationKey); }"
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "Read Trade order - saved 60.00",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/orders/{{m03L03OrderId}}"
+                  },
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                          "pm.test('Saved order keeps the same ID, key and total', () => { const order = pm.response.json(); pm.expect(order.id).to.eql(pm.collectionVariables.get('m03L03OrderId')); pm.expect(order.operationKey).to.eql(pm.collectionVariables.get('m03L03OperationKey')); pm.expect(order.total).to.eql(60); });"
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "Read Trade payment attempt - authorized 60.00",
+                  "request": {
+                    "method": "GET",
+                    "url": "{{baseUrl}}/diagnostics/payment-attempts?operationKey={{m03L03OperationKey}}"
+                  },
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+                          "pm.test('One attempt for the saved key and amount', () => { const attempts = pm.response.json(); pm.expect(attempts).to.have.lengthOf(1); pm.expect(attempts[0].operationKey).to.eql(pm.collectionVariables.get('m03L03OperationKey')); pm.expect(attempts[0].amount).to.eql(60); pm.expect(attempts[0].decision).to.eql('Approved'); });"
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Trade CAB 9 - Cable wins at 57.38",
+              "request": {
+                "method": "POST",
+                "url": "{{baseUrl}}/orders",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"sku\": \"CAB-105\",\n  \"quantity\": 9,\n  \"customerId\": \"trade\"\n}"
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('HTTP 201', () => pm.response.to.have.status(201));",
+                      "pm.test('Confirmed at 57.38', () => { const order = pm.response.json(); pm.expect(order.total).to.eql(57.38); pm.expect(order.status).to.eql('Confirmed'); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Trade CAB 11 - 66.00",
+              "request": {
+                "method": "POST",
+                "url": "{{baseUrl}}/orders",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"sku\": \"CAB-105\",\n  \"quantity\": 11,\n  \"customerId\": \"trade\"\n}"
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('HTTP 201', () => pm.response.to.have.status(201));",
+                      "pm.test('Confirmed at 66', () => { const order = pm.response.json(); pm.expect(order.total).to.eql(66); pm.expect(order.status).to.eql('Confirmed'); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Trade BRG 10 - 96.00",
+              "request": {
+                "method": "POST",
+                "url": "{{baseUrl}}/orders",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"sku\": \"BRG-204\",\n  \"quantity\": 10,\n  \"customerId\": \"trade\"\n}"
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('HTTP 201', () => pm.response.to.have.status(201));",
+                      "pm.test('Confirmed at 96', () => { const order = pm.response.json(); pm.expect(order.total).to.eql(96); pm.expect(order.status).to.eql('Confirmed'); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Unknown customer - 400",
+              "request": {
+                "method": "POST",
+                "url": "{{baseUrl}}/orders",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"sku\": \"CAB-105\",\n  \"quantity\": 10,\n  \"customerId\": \"missing\"\n}"
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('HTTP 400', () => pm.response.to.have.status(400));",
+                      "pm.test('Explicit customer rejection', () => pm.expect(pm.response.json().error).to.eql(\"Unknown customer ID.\"));"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Inactive customer - 400",
+              "request": {
+                "method": "POST",
+                "url": "{{baseUrl}}/orders",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"sku\": \"CAB-105\",\n  \"quantity\": 10,\n  \"customerId\": \"inactive\"\n}"
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('HTTP 400', () => pm.response.to.have.status(400));",
+                      "pm.test('Explicit customer rejection', () => pm.expect(pm.response.json().error).to.eql(\"Inactive customer.\"));"
+                    ]
+                  }
                 }
               ]
             }
