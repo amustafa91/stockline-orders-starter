@@ -2055,6 +2055,38 @@
                       }
                     }
                   ]
+                },
+                {
+                  "name": "Read Trade receipt and fulfillment previews - saved 60.00",
+                  "request": {
+                    "method": "GET",
+                    "header": [],
+                    "url": {
+                      "raw": "{{baseUrl}}/orders/{{m03L03OrderId}}/previews",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "orders",
+                        "{{m03L03OrderId}}",
+                        "previews"
+                      ]
+                    }
+                  },
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                          "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                          "const preview = pm.response.json();",
+                          "pm.test(\"Receipt keeps saved amount\", () => pm.expect(preview.receipt.total).to.eql(60));",
+                          "pm.test(\"Fulfillment keeps product and quantity\", () => { pm.expect(preview.fulfillment.sku).to.eql(\"CAB-105\"); pm.expect(preview.fulfillment.quantity).to.eql(10); });"
+                        ]
+                      }
+                    }
+                  ]
                 }
               ]
             },
