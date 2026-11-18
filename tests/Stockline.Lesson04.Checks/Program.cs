@@ -8,6 +8,12 @@ void Check(bool value, string label)
     if (!value) throw new Exception(label);
     Console.WriteLine($"PASS {++passed}: {label}");
 }
+if (args.Contains("--dispatch-only"))
+{
+    await RequestDispatchChecks.Run(Check);
+    Console.WriteLine($"Verified {passed} request-dispatch checks.");
+    return;
+}
 if (args.Contains("--diagnostics-only"))
 {
     await PaymentAttemptDiagnosticsChecks.Run(Check);
@@ -37,7 +43,7 @@ var catalog = new ProductCatalog();
 var store = new OrderStore();
 var gateway = new RecordingGateway();
 var useCase = new PlaceOrder(catalog, pricing, store, gateway, confirmed, customers, customerPolicies);
-var controller = new OrdersController(useCase, store);
+var controller = new OrdersController(new LocalCheckoutDispatcher([useCase]), store);
 foreach (var item in new[] { ("BRG-204", 24m), ("CAB-105", 15m) })
 {
     var response = await controller.Place(new(item.Item1, 2), default);
@@ -89,7 +95,8 @@ var provider = new SimulatedProvider(config);
 var http = new HttpClient(provider) { BaseAddress = new Uri("http://stockline-simulator.test") };
 var adapter = new PaymentAdapter(new FixtureHttpFactory(http));
 var realStore = new OrderStore();
-var real = new OrdersController(new PlaceOrder(catalog, pricing, realStore, adapter, confirmed, customers, customerPolicies), realStore);
+var realWorkflow = new PlaceOrder(catalog, pricing, realStore, adapter, confirmed, customers, customerPolicies);
+var real = new OrdersController(new LocalCheckoutDispatcher([realWorkflow]), realStore);
 await real.Place(new("CAB-105",2),default);
 Check(provider.Events.Any(e => e.Action == "Authorized" && e.Amount == 15m), "Actual adapter/provider authorizes catalog amount 15");
 var eventCount=provider.Events.Count;
@@ -153,6 +160,8 @@ await PaymentAttemptDiagnosticsChecks.Run(Check);
 await OrderConfirmedReactionChecks.Run(Check);
 
 await CustomerDiscountFactoryChecks.Run(Check);
+
+await RequestDispatchChecks.Run(Check);
 
 Console.WriteLine($"Verified {passed} checks.");
 

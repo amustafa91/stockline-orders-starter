@@ -2,14 +2,14 @@ using Microsoft.AspNetCore.Mvc;
 
 [ApiController]
 [Route("orders")]
-public sealed class OrdersController(PlaceOrder placeOrder, OrderStore store)
+public sealed class OrdersController(LocalCheckoutDispatcher dispatcher, OrderStore store)
     : ControllerBase
 {
     [HttpPost]
     public async Task<IActionResult> Place(
         [FromBody] CheckoutRequest request, CancellationToken cancellationToken)
     {
-        var result = await placeOrder.Execute(
+        var result = await dispatcher.Send(
             new PlaceOrderCommand(request.Sku, request.Quantity, request.CustomerId), cancellationToken);
         return result switch
         {

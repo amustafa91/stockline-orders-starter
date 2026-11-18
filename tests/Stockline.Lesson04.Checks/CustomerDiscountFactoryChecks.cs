@@ -51,7 +51,7 @@ internal static class CustomerDiscountFactoryChecks
         var publisher = new LocalOrderConfirmedPublisher(
             [new ReceiptPreviewReaction(previews), new FulfillmentPreviewReaction(previews)], previews);
         var workflow = new PlaceOrder(catalog, pricing, store, payments, publisher, customers, factory);
-        var controller = new OrdersController(workflow, store);
+        var controller = new OrdersController(new LocalCheckoutDispatcher([workflow]), store);
 
         foreach (var (customerId, error) in new[] { ("missing", "Unknown customer ID."), ("inactive", "Inactive customer.") })
         {

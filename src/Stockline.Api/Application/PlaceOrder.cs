@@ -2,7 +2,7 @@ public sealed class PlaceOrder(
     ProductCatalog catalog, OrderPricing pricing,
     OrderStore store, IPaymentGateway payments,
     LocalOrderConfirmedPublisher confirmed,
-    CustomerCatalog customers, CustomerDiscountPolicyFactory customerPolicies)
+    CustomerCatalog customers, CustomerDiscountPolicyFactory customerPolicies) : IPlaceOrderHandler
 {
     public async Task<PlaceOrderResult> Execute(
         PlaceOrderCommand command, CancellationToken cancellationToken)

@@ -1,6 +1,6 @@
 # Stockline Orders - Module 3 Lesson 4: One Request, One Handler
 
-This is the starting checkpoint. Start on a practice branch from [`module-03-lesson-04-start`](https://github.com/amustafa91/stockline-orders-starter/tree/module-03-lesson-04-start); compare with [`module-03-lesson-04-complete`](https://github.com/amustafa91/stockline-orders-starter/tree/module-03-lesson-04-complete) after your implementation. Earlier Lessons 1 and 2 are preserved.
+This is the completed checkpoint. Start on a practice branch from [`module-03-lesson-04-start`](https://github.com/amustafa91/stockline-orders-starter/tree/module-03-lesson-04-start); compare with [`module-03-lesson-04-complete`](https://github.com/amustafa91/stockline-orders-starter/tree/module-03-lesson-04-complete) after your implementation. Earlier Lessons 1 and 2 are preserved.
 
 ## Get the code
 

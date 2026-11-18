@@ -24,6 +24,8 @@ public static class CheckoutRegistration
         services.AddSingleton<IOrderConfirmedReaction, FulfillmentPreviewReaction>();
         services.AddSingleton<LocalOrderConfirmedPublisher>();
         services.AddScoped<PlaceOrder>();
+        services.AddScoped<IPlaceOrderHandler>(services => services.GetRequiredService<PlaceOrder>());
+        services.AddScoped<LocalCheckoutDispatcher>();
         services.AddSingleton<SimulatedProvider>();
         // This handler simulates a provider locally; the .test address never reaches a payment service.
         services.AddHttpClient("provider", client => client.BaseAddress = new Uri("http://stockline-simulator.test"))
