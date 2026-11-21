@@ -42,23 +42,19 @@ Opening `/` in a browser returns 404: this API has no homepage. Use **POST /orde
 
 ## Postman course folders
 
-Import the single `postman/Stockline Orders.postman_collection.json` file. All code checkpoints use the same collection and folder structure:
+For Lesson 1 on `main` or `lesson-01-complete`, import that branch's `postman/Stockline Orders.postman_collection.json`. Under `Module 01 - Clean Code Foundations`, open `Lesson 01 - Isolate the Payment Provider`. Send `Create Order` before `Get Last Order`. Restarting the API clears stored orders.
 
-```text
-Stockline Orders
-└── Module 01 - Clean Code Foundations
-    ├── Lesson 01 - Isolate the Payment Provider
-    │   ├── Create Order
-    │   └── Get Last Order
-    └── Lesson 02 - Names That Reveal Intent
-        ├── Create Order - two units
-        ├── Create Order - one unit
-        ├── Create Order - three units
-        ├── Get Last Order
-        └── Reject zero quantity
-```
+For Module 01, Lesson 02 — **Who Owns the Price?**, start your implementation from `lesson-01-complete`. Import the [collection from the reference solution](https://github.com/amustafa91/stockline-orders-starter/blob/lesson-02-complete/postman/Stockline%20Orders.postman_collection.json) for the Lesson 2 requests. Use this same collection when running the completed solution on `lesson-02-complete`. Open `Module 01 - Clean Code Foundations` → `Lesson 02 - Who Owns the Price` and set `baseUrl` to `http://localhost:7375`.
 
-Open or run only the current lesson folder against its matching code. Lesson 1 uses USD 12 per item; the completed Lesson 2 fixture uses 199 cents per item. A separate saved order identifier for each lesson prevents one lesson's request from replacing the other's value. Send a Create Order request before Get Last Order; restarting the API clears stored orders. The collection-level `baseUrl` is **http://localhost:7375** for every lesson. Future lessons belong under this collection, rather than separate collections.
+The client sends the SKU and quantity to `POST /orders`. The server looks up the unit price and multiplies it by the quantity. Use these requests to check your implementation:
+
+| Postman request | Expected result |
+| --- | --- |
+| BRG - two units - expect 24 | Two units of `BRG-204` at USD 12.00 total USD 24.00. |
+| CAB - two units - expect 15 | Two units of `CAB-105` at USD 7.50 total USD 15.00. |
+| Unknown SKU - expect 400 | SKU `UNKNOWN` returns HTTP 400. |
+| Submitted price ignored - expect 15 | Two units of `CAB-105` still total USD 15.00 when the client supplies `unitPrice: 0.01` and `total: 0.02`. |
+| Zero quantity - expect 400 | A quantity of zero returns HTTP 400. |
 
 ## What each folder does
 
